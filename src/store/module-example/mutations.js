@@ -1,4 +1,3 @@
-/*
-export function someMutation (state) {
+export default function someMutation(state) {
+  return state;
 }
-*/

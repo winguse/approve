@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "es5",
+    "strict": true,
+    "experimentalDecorators": true,
+    "module": "esnext",
+    "lib": ["dom", "es2015"],
+    "moduleResolution": "node"
+  },
+  "include": [
+    "./src/**/*.vue",
+    "./src/**/*.ts"
+  ]
+}
