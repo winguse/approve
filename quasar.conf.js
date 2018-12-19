@@ -45,10 +45,17 @@ module.exports = function config(ctx) {
         extendTypescriptToWebpack(cfg);
         cfg.module.rules.push({
           enforce: 'pre',
-          test: /\.(ts|vue)$/,
+          test: /\.(ts)$/,
           loader: 'tslint-loader',
           exclude: /node_modules/,
-        });
+        },
+        {
+          enforce: 'pre',
+          test: /\.(vue)$/,
+          loader: './vue-parser.js',
+          exclude: /node_modules/,
+        },
+        );
       },
     },
     devServer: {
