@@ -62,27 +62,29 @@
   </q-layout>
 </template>
 
-<script>
+<script lang="ts">
 import { openURL } from 'quasar';
-import { mapState, mapActions } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 
 export default {
   name: 'MyLayout',
+  // @ts-ignore
   data() {
     return {
+      // @ts-ignore
       leftDrawerOpen: this.$q.platform.is.desktop,
     };
   },
   computed: {
     ...mapState([
-      'config'
+      'config',
     ]),
   },
   methods: {
     openURL,
     ...mapActions('config', [
-      'someAction'
-    ])
+      'someAction',
+    ]),
   },
 };
 </script>

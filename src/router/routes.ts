@@ -13,6 +13,7 @@ if (process.env.MODE !== 'ssr') {
   // @ts-ignore
   routes.push({
     path: '*',
+    // @ts-ignore
     component: () => import('pages/Error404.vue'),
   });
 }
