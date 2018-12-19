@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import VueRouter from 'vue-router';
+import VueRouter, { RouterMode } from 'vue-router';
 
 import routes from './routes';
 
@@ -11,10 +11,10 @@ Vue.use(VueRouter);
  */
 
 // @ts-ignore ignore mode from process.env
-const mode = process.env.VUE_ROUTER_MODE;
+const mode: RouterMode = process.env.VUE_ROUTER_MODE;
 const base = process.env.VUE_ROUTER_BASE;
 
-export default function (/* { store, ssrContext } */) {
+export default function(/* { store, ssrContext } */) {
   const Router = new VueRouter({
     scrollBehavior: () => ({ y: 0, x: 0 }),
     routes,

@@ -6,12 +6,19 @@ function extendTypescriptToWebpack(cfg) {
   cfg.module.rules.push({
     test: /\.ts$/,
     loader: 'ts-loader',
-    options: { appendTsSuffixTo: [/\.vue$/] },
+    options: {
+      appendTsSuffixTo: [/\.vue$/],
+      onlyCompileBundledFiles: true,
+    },
   });
 }
 
 module.exports = function config(ctx) {
   return {
+    sourceFiles: {
+      router: 'src/router/index.ts',
+      store: 'src/store/index.ts',
+    },
     // app plugins (/src/plugins)
     plugins: [
       'i18n',
@@ -39,7 +46,7 @@ module.exports = function config(ctx) {
         cfg.module.rules.push({
           enforce: 'pre',
           test: /\.(ts|vue)$/,
-          loader: 'eslint-loader',
+          loader: 'tslint-loader',
           exclude: /node_modules/,
         });
       },
