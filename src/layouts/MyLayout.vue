@@ -32,7 +32,7 @@
         link
         inset-delimiter
       >
-        <q-list-header>Essential Links</q-list-header>
+        <q-list-header @click.native="someAction()">Essential Links {{ config.token }}</q-list-header>
         <q-item @click.native="openURL('http://quasar-framework.org')">
           <q-item-side icon="school" />
           <q-item-main label="Docs" sublabel="quasar-framework.org" />
@@ -64,6 +64,7 @@
 
 <script>
 import { openURL } from 'quasar';
+import { mapState, mapActions } from 'vuex';
 
 export default {
   name: 'MyLayout',
@@ -72,8 +73,16 @@ export default {
       leftDrawerOpen: this.$q.platform.is.desktop,
     };
   },
+  computed: {
+    ...mapState([
+      'config'
+    ]),
+  },
   methods: {
     openURL,
+    ...mapActions('config', [
+      'someAction'
+    ])
   },
 };
 </script>
