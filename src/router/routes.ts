@@ -19,7 +19,7 @@ const routes = [
           },
           {
             meta: { title: 'Pull Request' },
-            path: 'pull/:pull_id',
+            path: 'pull/:pullId',
             component: () => import('pages/PullRequest.vue'),
           },
         ],

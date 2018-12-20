@@ -13,7 +13,9 @@ export default {
   beforeCreate() {
     // get data
     // @ts-ignore
-    const { owner, repo }: { owner: string, repo: string } = this.$route.params;
+    const { owner, repo, pullId }: { owner: string, repo: string, pullId: string } = this.$route.params;
+    // @ts-ignore
+    this.$store.dispatch('pullRequests/load', { owner, repo, pullId });
   },
 };
 </script>

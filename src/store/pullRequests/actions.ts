@@ -6,8 +6,10 @@ export function clear(context: ActionContext<PR, StoreRoot>) { // TODO root stat
   context.commit('clear');
 }
 
-export function load(context: ActionContext<PR, StoreRoot>) {
-  //
+export function load(context: ActionContext<PR, StoreRoot>, params: {owner: string, repo: string, pullId: string}) {
+  const { rootState: { config: { token } } } = context;
+  // tslint:disable-next-line:no-console
+  console.log(context, params, token);
 }
 
 const actions: ActionTree<PR, StoreRoot> = {
