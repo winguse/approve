@@ -1,4 +1,4 @@
-import { Config } from './state';
+import { Config } from './index.d';
 
 export function getAll(state: Config) {
   return state;

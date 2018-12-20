@@ -10,5 +10,10 @@
 <script lang="ts">
 export default {
   name: 'PullRequest',
+  beforeCreate() {
+    // get data
+    // @ts-ignore
+    const { owner, repo }: { owner: string, repo: string } = this.$route.params;
+  },
 };
 </script>

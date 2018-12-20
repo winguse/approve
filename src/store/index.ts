@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 
 import config from './config';
+import pullRequests from './pullRequests';
 
 Vue.use(Vuex);
 
@@ -15,6 +16,7 @@ export default function(/* { ssrContext } */) {
     strict: process.env.NODE_ENV !== 'production',
     modules: {
       config,
+      pullRequests,
     },
   });
 

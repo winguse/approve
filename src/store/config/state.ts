@@ -1,9 +1,4 @@
-
-export interface Config {
-  repo: string;
-  owner: string;
-  token: string;
-}
+import { Config } from './index.d';
 
 const state: Config = {
   repo: '',

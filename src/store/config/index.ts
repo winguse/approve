@@ -1,15 +1,12 @@
-import { MutationTree } from 'vuex';
+import { Module, MutationTree } from 'vuex';
 
+import { updateMutationName } from '../../utils';
+import { StoreRoot } from '../index.d';
 import * as actions from './actions';
 import * as getters from './getters';
+import { Config } from './index.d';
 import * as mutations from './mutations';
-import state, { Config } from './state';
-
-export * from './state';
-
-function updateMutationName(key: string) {
-  return `update${key[0].toUpperCase()}${key.slice(1)}`;
-}
+import state from './state';
 
 const m: MutationTree<Config> = mutations;
 
@@ -20,17 +17,19 @@ Object.keys(state).forEach(key => {
     state[key] = value;
   }
   const name = updateMutationName(key);
-  m[name] = (config: Config, v: any) => {
+  m[name] = (conf: Config, v: any) => {
     localStorage.setItem(key, v);
     // @ts-ignore
-    config[key] = v;
+    conf[key] = v;
   };
 });
 
-export default {
+const config: Module<Config, StoreRoot> = {
   namespaced: true,
   state,
   getters,
   mutations,
   actions,
 };
+
+export default config;
