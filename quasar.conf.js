@@ -74,6 +74,8 @@ module.exports = function config(ctx) {
         'QItem',
         'QItemMain',
         'QItemSide',
+        'QBreadcrumbs',
+        'QBreadcrumbsEl',
       ],
       directives: [
         'Ripple',

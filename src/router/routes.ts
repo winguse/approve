@@ -3,7 +3,27 @@ const routes = [
     path: '/',
     component: () => import('layouts/DefaultLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/Index.vue') },
+      {
+        meta: { title: 'Approve' },
+        path: '', component: () => import('pages/Index.vue'),
+      }, // list of owners/repos
+      {
+        path: ':owner/:repo',
+        component: () => import('pages/Repo.vue'),
+        children: [
+          {
+            // list pull requests
+            meta: { title: 'Pull Requests' },
+            path: 'pulls',
+            component: () => import('pages/PullRequests.vue'),
+          },
+          {
+            meta: { title: 'Pull Request' },
+            path: 'pull/:pull_id',
+            component: () => import('pages/PullRequest.vue'),
+          },
+        ],
+      },
     ],
   },
 ];

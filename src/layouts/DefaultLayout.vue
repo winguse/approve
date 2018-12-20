@@ -17,8 +17,15 @@
         </q-btn>
 
         <q-toolbar-title>
-          Approve
-          <div slot="subtitle">Running on Quasar v{{ $q.version }}</div>
+          {{ title }}
+          <div slot="subtitle">
+            <q-breadcrumbs active-color="white" color="light" v-if="paths.length > 0">
+              <q-breadcrumbs-el v-for="path in paths" :label="path" :key="path"/>
+            </q-breadcrumbs>
+            <span v-else>
+              Running on Quasar v{{ $q.version }}
+            </span>
+          </div>
         </q-toolbar-title>
       </q-toolbar>
     </q-layout-header>
@@ -78,6 +85,19 @@ export default {
   },
   computed: {
     ...mapGetterSetter('config', ['token', 'repo', 'owner']),
+    title() {
+      // @ts-ignore
+      const titleFromRoute: string = this.$route.meta.title;
+      return titleFromRoute;
+    },
+    paths() {
+      // @ts-ignore
+      const { owner, repo }: { owner: string, repo: string } = this.$route.params;
+      if (repo) {
+        return ['Approve', owner, repo];
+      }
+      return [];
+    },
   },
   methods: {
     openURL,

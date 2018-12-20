@@ -1,6 +1,6 @@
 <template>
   <q-page class="flex flex-center">
-    <router-link to="/winguse/winguse.github.io/pulls">Pulls of winguse/winguse.github.io</router-link>
+    pull request
   </q-page>
 </template>
 
@@ -9,6 +9,6 @@
 
 <script lang="ts">
 export default {
-  name: 'PageIndex',
+  name: 'PullRequest',
 };
 </script>
