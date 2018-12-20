@@ -1,5 +1,5 @@
 import { Config } from './state';
 
-export function getAllConfig(state: Config) {
+export function getAll(state: Config) {
   return state;
 }

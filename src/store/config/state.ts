@@ -6,9 +6,9 @@ export interface Config {
 }
 
 const state: Config = {
-  repo: 'winguse.github.io',
-  owner: 'winguse',
-  token: 'original',
+  repo: '',
+  owner: '',
+  token: '',
 };
 
 export default state;

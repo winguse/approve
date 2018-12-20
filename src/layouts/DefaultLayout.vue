@@ -17,7 +17,7 @@
         </q-btn>
 
         <q-toolbar-title>
-          Quasar App
+          Approve
           <div slot="subtitle">Running on Quasar v{{ $q.version }}</div>
         </q-toolbar-title>
       </q-toolbar>
@@ -32,26 +32,26 @@
         link
         inset-delimiter
       >
-        <q-list-header @click.native="someAction()">Essential Links {{ config.token }}</q-list-header>
-        <q-item @click.native="openURL('http://quasar-framework.org')">
-          <q-item-side icon="school" />
-          <q-item-main label="Docs" sublabel="quasar-framework.org" />
+        <q-list-header>Configurations</q-list-header>
+        <q-item>
+          <q-item-main>
+            <q-input float-label="Token" v-model="token" />
+          </q-item-main>
         </q-item>
-        <q-item @click.native="openURL('https://github.com/quasarframework/')">
-          <q-item-side icon="code" />
-          <q-item-main label="GitHub" sublabel="github.com/quasarframework" />
+        <q-item>
+          <q-item-main>
+            <q-input float-label="Owner" v-model="owner" />
+          </q-item-main>
         </q-item>
-        <q-item @click.native="openURL('https://discord.gg/5TDhbDg')">
-          <q-item-side icon="chat" />
-          <q-item-main label="Discord Chat Channel" sublabel="https://discord.gg/5TDhbDg" />
+        <q-item>
+          <q-item-main>
+            <q-input float-label="Repository" v-model="repo" />
+          </q-item-main>
         </q-item>
-        <q-item @click.native="openURL('http://forum.quasar-framework.org')">
-          <q-item-side icon="record_voice_over" />
-          <q-item-main label="Forum" sublabel="forum.quasar-framework.org" />
-        </q-item>
-        <q-item @click.native="openURL('https://twitter.com/quasarframework')">
-          <q-item-side icon="rss feed" />
-          <q-item-main label="Twitter" sublabel="@quasarframework" />
+        <q-item>
+          <q-item-main>
+            <q-btn label="Clear" class="full-width" @click="clear" />
+          </q-item-main>
         </q-item>
       </q-list>
     </q-layout-drawer>
@@ -65,9 +65,10 @@
 <script lang="ts">
 import { openURL } from 'quasar';
 import { mapActions, mapState } from 'vuex';
+import { mapGetterSetter } from '../utils';
 
 export default {
-  name: 'MyLayout',
+  name: 'DefaultLayout',
   // @ts-ignore
   data() {
     return {
@@ -76,14 +77,12 @@ export default {
     };
   },
   computed: {
-    ...mapState([
-      'config',
-    ]),
+    ...mapGetterSetter('config', ['token', 'repo', 'owner']),
   },
   methods: {
     openURL,
     ...mapActions('config', [
-      'someAction',
+      'clear',
     ]),
   },
 };
