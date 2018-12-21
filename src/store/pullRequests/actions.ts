@@ -58,6 +58,8 @@ query getPullRequestInfo {
         nodes {
           commit {
             oid
+            message
+            messageHeadline
             messageBody
             committedDate
             additions
@@ -203,8 +205,8 @@ export async function load(
       return acc;
     }, {})),
     commits: commits
-      .map(({commit: {additions, deletions, oid: sha, committedDate, messageBody: message}}: any) =>
-        ({additions, deletions, sha, at: toTimestamp(committedDate), message})),
+      .map(({commit: {additions, deletions, oid: sha, committedDate, messageHeadline, messageBody, message}}: any) =>
+        ({additions, deletions, sha, at: toTimestamp(committedDate), messageHeadline, message, messageBody})),
   };
   // tslint:disable-next-line:no-console
   console.log(pr);

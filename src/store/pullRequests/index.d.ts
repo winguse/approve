@@ -58,6 +58,8 @@ export interface Commit {
   sha: string;
   at: number;
   message: string;
+  messageHeadline: string;
+  messageBody: string;
 }
 
 export interface PR {
