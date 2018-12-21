@@ -1,3 +1,4 @@
+import { CommentState, ReviewState } from './enums';
 
 export interface File {
   name: string;
@@ -14,14 +15,6 @@ export interface Directory {
 export interface GitObj {
   sha: string;
   branch: string;
-}
-
-export enum CommentState {
-  Active,
-  Pending,
-  Resolved,
-  WontFix, // won't fix
-  Closed,
 }
 
 export interface DetailPosition {
@@ -43,24 +36,28 @@ export interface UserInfo {
 export interface Comment extends UserInfo {
   state: CommentState;
   message: string;
-  createdAt: number;
+  html: string;
+  at: number;
   id: number;
   replyTo?: number;
-  file: string;
+  path: string;
   sha: string;
+  githubPosition: number; // this is tricky
   line: number;
   detailPos?: DetailPosition;
 }
 
-export enum ReviewState {
-  Approved,
-  Commented,
-  ChangesRequested,
-}
-
 export interface Review extends UserInfo {
   state: ReviewState;
-  createdAt: number;
+  at: number;
+}
+
+export interface Commit {
+  additions: number;
+  deletions: number;
+  sha: string;
+  at: number;
+  message: string;
 }
 
 export interface PR {
@@ -71,4 +68,6 @@ export interface PR {
   to: GitObj;
   affected: Array<Directory | File>;
   comments: Comment[];
+  reviews: Review[];
+  commits: Commit[];
 }

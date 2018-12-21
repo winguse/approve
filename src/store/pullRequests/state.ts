@@ -13,6 +13,8 @@ export const emptyState: PR = {
   to: emptyGitObj,
   affected: [],
   comments: [],
+  reviews: [],
+  commits: [],
 };
 
 export default Object.assign({}, emptyState);
