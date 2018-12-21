@@ -13,6 +13,6 @@ export function addReview(state: PR) {
   // TODO
 }
 
-export function load(state: PR) {
-  // TODO
+export function load(state: PR, pr: PR) {
+  Object.assign(state, pr);
 }

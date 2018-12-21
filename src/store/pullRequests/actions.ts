@@ -208,8 +208,6 @@ export async function load(
       .map(({commit: {additions, deletions, oid: sha, committedDate, messageHeadline, messageBody, message}}: any) =>
         ({additions, deletions, sha, at: toTimestamp(committedDate), messageHeadline, message, messageBody})),
   };
-  // tslint:disable-next-line:no-console
-  console.log(pr);
   context.commit('load', pr);
 }
 
