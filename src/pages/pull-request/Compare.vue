@@ -1,7 +1,7 @@
 <template>
-  <q-page class="flex flex-center" style="background: #eee">
+  <div style="background: #eee">
     compare diff stuffs
-  </q-page>
+  </div>
 </template>
 
 <style>
@@ -14,7 +14,7 @@ export default {
     // @ts-ignore
     const { owner, repo, pullId }: { owner: string, repo: string, pullId: string } = this.$route.params;
     // @ts-ignore
-    this.$store.dispatch('pullRequests/load', { owner, repo, pullId });
+    this.$store.dispatch('pullRequests/loead', { owner, repo, pullId });
   },
 };
 </script>

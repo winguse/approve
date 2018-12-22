@@ -1,5 +1,5 @@
 <template>
-  <q-layout-drawer side="right" v-model="showCommentList">
+  <q-layout-drawer side="right" :overlay="false" v-model="showCommentList">
     comment list
   </q-layout-drawer>
 </template>
