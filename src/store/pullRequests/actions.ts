@@ -1,7 +1,11 @@
+import log from 'js-logger';
 import { ActionContext, ActionTree } from 'vuex';
 import { StoreRoot } from '../index.d';
 import { CommentState } from './enums';
-import { Comment, Commit, CommitFile, PR, Review, ReviewFile } from './index.d';
+import { Comment, Commit, CommitFile, MergeBaseCommit, MergeBaseFile, PR, Review, ReviewFile } from './index.d';
+
+const GITHUB_API_BASE = 'https://api.github.com';
+const GITHUB_GRAPHQL_API_URL = GITHUB_API_BASE + '/graphql';
 
 export function clear(context: ActionContext<PR, StoreRoot>) { // TODO root state typing
   context.commit('clear');
@@ -66,6 +70,9 @@ query getPullRequestInfo {
             deletions
             parents(first: 10) {
               totalCount
+              nodes {
+                oid
+              }
             }
           }
         }
@@ -97,10 +104,7 @@ query getPullRequestInfo {
     }
   }
 }`;
-
 }
-
-const GITHUB_GRAPHQL_API_URL = 'https://api.github.com/graphql';
 
 async function executeGraphQlQuery(query: string, token: string) {
   const key = `${GITHUB_GRAPHQL_API_URL}|${query}`;
@@ -127,7 +131,7 @@ async function executeGraphQlQuery(query: string, token: string) {
 }
 
 async function getDiff(token: string, owner: string, repo: string, from: string, to: string) {
-  const url = `https://api.github.com/repos/${owner}/${repo}/compare/${from}...${to}`;
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/compare/${from}...${to}`;
   const cached = localStorage.getItem(url);
   if (cached) { // this cache never expire
     const timePos = cached.indexOf('|');
@@ -152,48 +156,69 @@ function toTimestamp(dateStr: string) {
 const commentMessageReg = /(.*?)(<!--(.+)-->)?$/;
 
 export async function load(
-    context: ActionContext<PR, StoreRoot>,
-    params: { owner: string, repo: string, pullId: string },
-  ) {
+  context: ActionContext<PR, StoreRoot>,
+  params: { owner: string, repo: string, pullId: string },
+) {
   const { rootState: { config: { token } } } = context;
   const { owner, repo, pullId } = params;
   const query = getPullRequestInfoQuery(owner, repo, pullId);
-  const {data: {repository: {pullRequest: {
-    baseRef, headRef, commits: {nodes: commits}, reviews: {nodes: reviews},
-  }}}} = await executeGraphQlQuery(query, token);
+  const { data: { repository: { pullRequest: {
+    baseRef, headRef, commits: { nodes: commits }, reviews: { nodes: reviews },
+  } } } } = await executeGraphQlQuery(query, token);
   const commitList: Commit[] = commits
-  .map(({commit: {additions, deletions, oid: sha, committedDate, messageHeadline,
-    messageBody, message, parents: {totalCount: parentCount}}}: any) => {
-    const commit: Commit = {
-      additions, deletions, sha, at: toTimestamp(committedDate), messageHeadline,
-      message, messageBody, files: new Map<string, CommitFile>(),
-      parentCount, reviewFiles: new Map<string, ReviewFile>(),
-    };
-    return commit;
-  });
+    .map(({ commit: { additions, deletions, oid: sha, committedDate, messageHeadline,
+      messageBody, message, parents: { nodes: parentCommits } } }: any) => {
+      const commit: Commit = {
+        additions, deletions, sha, at: toTimestamp(committedDate), messageHeadline,
+        message, messageBody, files: new Map<string, CommitFile>(), mergeBaseSha: undefined,
+        parents: parentCommits.map((c: any) => c.oid), reviewFiles: new Map<string, ReviewFile>(),
+      };
+      return commit;
+    });
   const commitsMap = commitList.reduce((acc: Map<string, Commit>, cur: Commit) => {
     acc.set(cur.sha, cur);
     return acc;
   }, new Map<string, Commit>());
+  const mergeBaseSha: string = baseRef.target.oid;
+  let lastCommit: Commit = commitList[commitList.length - 1];
+  while (true) {
+    lastCommit.mergeBaseSha = mergeBaseSha;
+    if (lastCommit.parents.length === 1) {
+      if (lastCommit.parents[0] === mergeBaseSha) {
+        log.debug('done as we reached mergeBaseSha', lastCommit);
+        break;
+      }
+      const previous = commitsMap.get(lastCommit.parents[0]);
+      if (previous) {
+        lastCommit = previous;
+      } else {
+        log.warn('expect previous exist', lastCommit);
+        break;
+      }
+    } else {
+      log.debug('skip assigning mergeBaseSha because it\'s a merge commit.', lastCommit);
+      break;
+    }
+  }
   const commitShaList = commitList.map((commit: Commit) => commit.sha);
   const pr: PR = {
     repo,
     owner,
     loading: false,
-    from: {
-      sha: baseRef.target.oid,
+    mergeTo: {
+      sha: mergeBaseSha,
       branch: baseRef.name,
     },
-    to: {
+    mergeFrom: {
       sha: headRef.target.oid,
       branch: headRef.name,
     },
     tree: [],
     activeChanges: [],
     comments: reviews.flatMap(
-      ({author: {avatarUrl, login}, comments: {nodes}}: any) => {
+      ({ author: { avatarUrl, login }, comments: { nodes } }: any) => {
         return nodes.map(({
-          body: rawMessage, bodyHTML: html, commit: {oid: sha}, createdAt,
+          body: rawMessage, bodyHTML: html, commit: { oid: sha }, createdAt,
           databaseId: id, replyTo, position: githubPosition, path,
         }: any) => {
           const [, message, , json] = rawMessage.match(commentMessageReg);
@@ -214,8 +239,8 @@ export async function load(
       },
     ),
     reviews: reviews.map(
-      ({author: {avatarUrl, login}, state, createdAt}: any) =>
-        ({avatarUrl, login, state, at: toTimestamp(createdAt)}),
+      ({ author: { avatarUrl, login }, state, createdAt }: any) =>
+        ({ avatarUrl, login, state, at: toTimestamp(createdAt) }),
     ).reduce((acc: Map<string, Review>, cur: Review) => {
       const last = acc.get(cur.login);
       if (!last || last.at < cur.at) {
@@ -225,15 +250,63 @@ export async function load(
     }, new Map<string, Review>()),
     commits: commitsMap,
     commitShaList,
+    baseCommits: new Map<string, MergeBaseCommit>(),
     selectedEndCommit: headRef.target.oid,
     selectedStartCommit: baseRef.target.oid,
   };
   context.commit('load', pr);
+  context.dispatch('loadCommitReviewFiles', headRef.target.oid);
+}
+
+export async function loadCommitReviewFiles(
+  context: ActionContext<PR, StoreRoot>,
+  sha: string,
+) {
+  const commit = context.state.commits.get(sha);
+  if (!commit) {
+    log.warn('commit is not found.', sha);
+    return;
+  }
+  if (commit.reviewFiles.size) {
+    log.info('skip because the data we already have.', sha);
+    return;
+  }
+  if (commit.parents.length === 1) {
+    const parentSha = commit.parents[0];
+    const parentCommit = context.state.commits.get(parentSha);
+    if (parentCommit && parentCommit.reviewFiles.size) {
+      // TODO in this case, we can:
+      // 1. get commit patch
+      // 2. fill commit.files
+      // 3. generate commit.reviewFiles
+      // 4. parentCommit.mergeBaseSha
+      // return;
+    }
+  }
+  const { rootState: { config: { token } }, state: { owner, repo, mergeTo: { branch: mergeTargetBranch } } } = context;
+  // get branch compare
+  const { files, merge_base_commit: { sha: mergeBaseSha } }: { files: any[], merge_base_commit: { sha: string } } =
+    await getDiff(token, owner, repo, mergeTargetBranch, sha);
+  const reviewFiles: Map<string, ReviewFile> =
+    files.map(({ patch: diff, contents_url: contentUrl, filename: fullPath }: any) => {
+      const file: ReviewFile = {
+        name: fullPath.split('/').pop(),
+        fullPath,
+        diff,
+        contentUrl,
+      };
+      return file;
+    }).reduce((acc, cur) => {
+      acc.set(cur.fullPath, cur);
+      return acc;
+    }, new Map<string, ReviewFile>());
+  context.commit('loadCommitReviewFiles', { sha, reviewFiles, mergeBaseSha });
 }
 
 const actions: ActionTree<PR, StoreRoot> = {
   clear,
   load,
+  loadCommitReviewFiles,
 };
 
 export default actions;

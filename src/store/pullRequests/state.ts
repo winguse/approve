@@ -1,4 +1,4 @@
-import { Commit, GitObj, PR, Review } from './index.d';
+import { Commit, GitObj, MergeBaseCommit, PR, Review } from './index.d';
 
 const emptyGitObj: GitObj = {
   sha: '',
@@ -9,8 +9,8 @@ export const emptyState: PR = {
   repo: '',
   owner: '',
   loading: true,
-  from: emptyGitObj,
-  to: emptyGitObj,
+  mergeTo: emptyGitObj,
+  mergeFrom: emptyGitObj,
   tree: [],
   comments: [],
   reviews: new Map<string, Review>(),
@@ -19,6 +19,7 @@ export const emptyState: PR = {
   activeChanges: [],
   selectedEndCommit: '',
   selectedStartCommit: '',
+  baseCommits: new Map<string, MergeBaseCommit>(),
 };
 
 export default Object.assign({}, emptyState);

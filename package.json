@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@types/node": "^10.12.17",
+    "js-logger": "^1.6.0",
     "vue-class-component": "^6.3.2",
     "vue-i18n": "^7.3.3",
     "vue-property-decorator": "^7.2.0"

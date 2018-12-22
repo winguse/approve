@@ -79,19 +79,21 @@ export interface ReviewFile extends FileItem {
    * 3. only the same result can help us on computing the position
    *    compatible to Github's position
    */
-  diff: string;
-  content: string;
+  diff?: string;
+  contentUrl?: string;
+  content?: string;
 }
 
 export interface Commit {
   additions: number;
   deletions: number;
   sha: string;
+  mergeBaseSha?: string;
   at: number;
   message: string;
   messageHeadline: string;
   messageBody: string;
-  parentCount: number;
+  parents: string[];
   /**
    * Affected files of this commit.
    *
@@ -134,12 +136,22 @@ export interface MergeTargetCommit extends GitObj {
   reviewFiles: ReviewFile[];
 }
 
+export interface MergeBaseFile extends FileItem {
+  contentUrl?: string;
+  content?: string;
+}
+
+export interface MergeBaseCommit {
+  sha: string;
+  baseFiles: Map<string, MergeBaseFile>;
+}
+
 export interface PR {
   repo: string;
   owner: string;
   loading: boolean;
-  from: GitObj;
-  to: GitObj;
+  mergeTo: GitObj;
+  mergeFrom: GitObj;
   comments: Comment[];
   /**
    * map from login to review
@@ -147,6 +159,7 @@ export interface PR {
   reviews: Map<string, Review>;
   commits: Map<string, Commit>;
   commitShaList: string[];
+  baseCommits: Map<string, MergeBaseCommit>;
   selectedStartCommit: string;
   selectedEndCommit: string;
   /**
