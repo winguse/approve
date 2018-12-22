@@ -1,21 +1,11 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="hhh Lpr lFf">
     <q-layout-header>
       <q-toolbar
         color="primary"
         :glossy="$q.theme === 'mat'"
         :inverted="$q.theme === 'ios'"
       >
-        <q-btn
-          flat
-          dense
-          round
-          @click="leftDrawerOpen = !leftDrawerOpen"
-          aria-label="Menu"
-        >
-          <q-icon name="menu" />
-        </q-btn>
-
         <q-toolbar-title>
           {{ title }}
           <div slot="subtitle">
@@ -27,64 +17,45 @@
             </span>
           </div>
         </q-toolbar-title>
+        <q-btn
+          flat
+          dense
+          round
+          @click="configOpened = true"
+          aria-label="Settings"
+        >
+          <q-icon name="settings" />
+        </q-btn>
       </q-toolbar>
+      <router-view name="insideHeader" />
+      <configurations v-model="configOpened" />
     </q-layout-header>
 
-    <q-layout-drawer
-      v-model="leftDrawerOpen"
-      :content-class="$q.theme === 'mat' ? 'bg-grey-2' : null"
-    >
-      <q-list
-        no-border
-        link
-        inset-delimiter
-      >
-        <q-list-header>Configurations</q-list-header>
-        <q-item>
-          <q-item-main>
-            <q-input float-label="Token" v-model="token" />
-          </q-item-main>
-        </q-item>
-        <q-item>
-          <q-item-main>
-            <q-input float-label="Owner" v-model="owner" />
-          </q-item-main>
-        </q-item>
-        <q-item>
-          <q-item-main>
-            <q-input float-label="Repository" v-model="repo" />
-          </q-item-main>
-        </q-item>
-        <q-item>
-          <q-item-main>
-            <q-btn label="Clear" class="full-width" @click="clear" />
-          </q-item-main>
-        </q-item>
-      </q-list>
-    </q-layout-drawer>
+    <router-view name="left" />
+    <router-view name="right" />
 
     <q-page-container>
       <router-view />
     </q-page-container>
+
+    <router-view name="footer" />
+
   </q-layout>
 </template>
 
 <script lang="ts">
 import { openURL } from 'quasar';
-import { mapActions, mapState } from 'vuex';
-import { mapGetterSetter } from '../utils';
+import Configurations from '../components/Configurations.vue';
 
 export default {
   name: 'DefaultLayout',
   // @ts-ignore
   data() {
     return {
-      // @ts-ignore
-      leftDrawerOpen: this.$q.platform.is.desktop,
+      configOpened: false,
     };
   },
   computed: {
-    ...mapGetterSetter('config', ['token', 'repo', 'owner']),
     title() {
       // @ts-ignore
       const titleFromRoute: string = this.$route.meta.title;
@@ -101,9 +72,9 @@ export default {
   },
   methods: {
     openURL,
-    ...mapActions('config', [
-      'clear',
-    ]),
+  },
+  components: {
+    Configurations,
   },
 };
 </script>

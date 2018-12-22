@@ -1,6 +1,6 @@
 <template>
-  <q-page class="flex flex-center">
-    pull request
+  <q-page class="flex flex-center" style="background: #eee">
+    compare diff stuffs
   </q-page>
 </template>
 
@@ -9,9 +9,8 @@
 
 <script lang="ts">
 export default {
-  name: 'PullRequest',
+  name: 'Compare',
   beforeCreate() {
-    // get data
     // @ts-ignore
     const { owner, repo, pullId }: { owner: string, repo: string, pullId: string } = this.$route.params;
     // @ts-ignore

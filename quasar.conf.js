@@ -59,8 +59,12 @@ module.exports = function config(ctx) {
     // framework: 'all' --- includes everything; for dev only!
     framework: {
       components: [
+        'QModal',
+        'QField',
+        'QPageSticky',
         'QLayout',
         'QLayoutHeader',
+        'QLayoutFooter',
         'QLayoutDrawer',
         'QPageContainer',
         'QPage',

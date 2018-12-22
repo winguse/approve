@@ -6,23 +6,21 @@ const routes = [
       {
         meta: { title: 'Approve' },
         path: '', component: () => import('pages/Index.vue'),
-      }, // list of owners/repos
+      },
       {
-        path: ':owner/:repo',
-        component: () => import('pages/Repo.vue'),
-        children: [
-          {
-            // list pull requests
-            meta: { title: 'Pull Requests' },
-            path: 'pulls',
-            component: () => import('pages/PullRequests.vue'),
-          },
-          {
-            meta: { title: 'Pull Request' },
-            path: 'pull/:pullId',
-            component: () => import('pages/PullRequest.vue'),
-          },
-        ],
+        meta: { title: 'Pull Requests' },
+        path: ':owner/:repo/pulls',
+        component: () => import('pages/PullRequests.vue'),
+      },
+      {
+        meta: { title: 'Pull Request' },
+        path: ':owner/:repo/pull/:pullId',
+        components: {
+          default: () => import('pages/pull-request/Compare.vue'),
+          left: () => import('pages/pull-request/Tree.vue'),
+          right: () => import('pages/pull-request/CommentList.vue'),
+          footer: () => import('pages/pull-request/Footer.vue'),
+        },
       },
     ],
   },

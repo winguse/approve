@@ -1,5 +1,7 @@
 <template>
-  <router-view />
+  <q-layout-footer>
+    footer
+  </q-layout-footer>
 </template>
 
 <style>
@@ -7,6 +9,6 @@
 
 <script lang="ts">
 export default {
-  name: 'PullRequest',
+  name: 'Footer',
 };
 </script>
