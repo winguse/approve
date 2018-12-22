@@ -1,7 +1,7 @@
 import { ActionContext, ActionTree } from 'vuex';
 import { StoreRoot } from '../index.d';
 import { CommentState } from './enums';
-import { Comment, PR, Review } from './index.d';
+import { Comment, Commit, CommitFile, PR, Review, ReviewFile } from './index.d';
 
 export function clear(context: ActionContext<PR, StoreRoot>) { // TODO root state typing
   context.commit('clear');
@@ -64,6 +64,9 @@ query getPullRequestInfo {
             committedDate
             additions
             deletions
+            parents(first: 10) {
+              totalCount
+            }
           }
         }
         pageInfo {
@@ -158,6 +161,21 @@ export async function load(
   const {data: {repository: {pullRequest: {
     baseRef, headRef, commits: {nodes: commits}, reviews: {nodes: reviews},
   }}}} = await executeGraphQlQuery(query, token);
+  const commitList: Commit[] = commits
+  .map(({commit: {additions, deletions, oid: sha, committedDate, messageHeadline,
+    messageBody, message, parents: {totalCount: parentCount}}}: any) => {
+    const commit: Commit = {
+      additions, deletions, sha, at: toTimestamp(committedDate), messageHeadline,
+      message, messageBody, files: new Map<string, CommitFile>(),
+      parentCount, reviewFiles: new Map<string, ReviewFile>(),
+    };
+    return commit;
+  });
+  const commitsMap = commitList.reduce((acc: Map<string, Commit>, cur: Commit) => {
+    acc.set(cur.sha, cur);
+    return acc;
+  }, new Map<string, Commit>());
+  const commitShaList = commitList.map((commit: Commit) => commit.sha);
   const pr: PR = {
     repo,
     owner,
@@ -170,7 +188,8 @@ export async function load(
       sha: headRef.target.oid,
       branch: headRef.name,
     },
-    affected: [],
+    tree: [],
+    activeChanges: [],
     comments: reviews.flatMap(
       ({author: {avatarUrl, login}, comments: {nodes}}: any) => {
         return nodes.map(({
@@ -194,19 +213,20 @@ export async function load(
         });
       },
     ),
-    reviews: Object.values(reviews.map(
+    reviews: reviews.map(
       ({author: {avatarUrl, login}, state, createdAt}: any) =>
         ({avatarUrl, login, state, at: toTimestamp(createdAt)}),
-    ).reduce((acc: {[key: string]: Review}, cur: Review) => {
-      const last = acc[cur.login];
+    ).reduce((acc: Map<string, Review>, cur: Review) => {
+      const last = acc.get(cur.login);
       if (!last || last.at < cur.at) {
-        acc[cur.login] = cur;
+        acc.set(cur.login, cur);
       }
       return acc;
-    }, {})),
-    commits: commits
-      .map(({commit: {additions, deletions, oid: sha, committedDate, messageHeadline, messageBody, message}}: any) =>
-        ({additions, deletions, sha, at: toTimestamp(committedDate), messageHeadline, message, messageBody})),
+    }, new Map<string, Review>()),
+    commits: commitsMap,
+    commitShaList,
+    selectedEndCommit: headRef.target.oid,
+    selectedStartCommit: baseRef.target.oid,
   };
   context.commit('load', pr);
 }
