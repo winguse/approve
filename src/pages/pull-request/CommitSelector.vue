@@ -50,7 +50,11 @@ export default class CommitSelector extends Vue {
     });
   }
   get selectedStartCommit() {
-    return this.store.state.pullRequests.selectedStartCommit.slice(0, 6);
+    const {selectedStartCommit, mergeTo: {branch, sha}} = this.store.state.pullRequests;
+    if (selectedStartCommit === sha) {
+      return branch;
+    }
+    return selectedStartCommit.slice(0, 6);
   }
   get selectedEndCommit() {
     return this.store.state.pullRequests.selectedEndCommit.slice(0, 6);
