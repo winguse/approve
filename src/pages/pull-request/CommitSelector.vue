@@ -1,7 +1,7 @@
 <template>
-  <div style="padding: 1em" v-if="maxIndex >= 0">
+  <div style="padding: 1em 4em" v-if="maxIndex >= 0">
     <q-range
-      v-model="rangeValues"
+      v-model.lazy="rangeValues"
       :error="rangeValues.min === rangeValues.max"
       :min="-1"
       :max="maxIndex"
@@ -10,7 +10,8 @@
       :right-label-value="selectedEndCommit"
       markers
       snap
-      label
+      label-always
+      drag-range
     />
   </div>
 </template>
@@ -40,22 +41,19 @@ export default class CommitSelector extends Vue {
     return {min, max};
   }
   set rangeValues({min, max}: {min: number, max: number}) {
-    const {commitShaList, mergeTo: {sha}, selectedStartCommit, selectedEndCommit} = this.store.state.pullRequests;
-    const nextSelectedStartCommit = min === -1 ? sha : commitShaList[min];
-    const nextSelectedEndCommit = commitShaList[max];
-    if (nextSelectedStartCommit === selectedStartCommit && nextSelectedEndCommit === selectedEndCommit) {
-      return;
-    }
+    const {commitShaList, mergeTo: {sha}} = this.store.state.pullRequests;
+    const selectedStartCommit = min === -1 ? sha : commitShaList[min];
+    const selectedEndCommit = commitShaList[max];
     this.store.dispatch('pullRequests/updateSelectedCommits', {
-      selectedStartCommit: nextSelectedStartCommit,
-      selectedEndCommit: nextSelectedEndCommit,
+      selectedStartCommit,
+      selectedEndCommit,
     });
   }
   get selectedStartCommit() {
-    return this.store.state.pullRequests.selectedStartCommit;
+    return this.store.state.pullRequests.selectedStartCommit.slice(0, 6);
   }
   get selectedEndCommit() {
-    return this.store.state.pullRequests.selectedEndCommit;
+    return this.store.state.pullRequests.selectedEndCommit.slice(0, 6);
   }
 }
 </script>
