@@ -14,7 +14,7 @@ export default {
     // @ts-ignore
     const { owner, repo, pullId }: { owner: string, repo: string, pullId: string } = this.$route.params;
     // @ts-ignore
-    this.$store.dispatch('pullRequests/loead', { owner, repo, pullId });
+    this.$store.dispatch('pullRequests/load', { owner, repo, pullId });
   },
 };
 </script>
