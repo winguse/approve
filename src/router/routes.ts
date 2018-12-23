@@ -17,6 +17,7 @@ const routes = [
         path: ':owner/:repo/pull/:pullId',
         components: {
           default: () => import('pages/pull-request/Compare.vue'),
+          insideHeader: () => import('pages/pull-request/CommitSelector.vue'),
           left: () => import('pages/pull-request/Tree.vue'),
           right: () => import('pages/pull-request/CommentList.vue'),
           footer: () => import('pages/pull-request/Footer.vue'),

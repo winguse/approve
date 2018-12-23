@@ -28,3 +28,11 @@ export function loadCommitReviewFiles(state: PR, { sha, reviewFiles, mergeBaseSh
     state.commits = commits;
   }
 }
+
+export function updateSelectedCommits(
+  state: PR,
+  {selectedStartCommit, selectedEndCommit}: {selectedStartCommit: string, selectedEndCommit: string},
+  ) {
+  state.selectedStartCommit = selectedStartCommit;
+  state.selectedEndCommit = selectedEndCommit;
+}

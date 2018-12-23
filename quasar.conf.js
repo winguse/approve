@@ -59,6 +59,7 @@ module.exports = function config(ctx) {
     // framework: 'all' --- includes everything; for dev only!
     framework: {
       components: [
+        'QRange',
         'QModal',
         'QField',
         'QPageSticky',

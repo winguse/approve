@@ -303,10 +303,19 @@ export async function loadCommitReviewFiles(
   context.commit('loadCommitReviewFiles', { sha, reviewFiles, mergeBaseSha });
 }
 
+export async function updateSelectedCommits(
+  context: ActionContext<PR, StoreRoot>,
+  selectedCommits: {selectedStartCommit: string, selectedEndCommit: string}) {
+  // tslint:disable-next-line:no-console
+  console.log(selectedCommits);
+  context.commit('updateSelectedCommits', selectedCommits);
+}
+
 const actions: ActionTree<PR, StoreRoot> = {
   clear,
   load,
   loadCommitReviewFiles,
+  updateSelectedCommits,
 };
 
 export default actions;
