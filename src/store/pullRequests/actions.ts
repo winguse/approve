@@ -303,12 +303,26 @@ export async function loadCommitReviewFiles(
   context.commit('loadCommitReviewFiles', { sha, reviewFiles, mergeBaseSha });
 }
 
+let loadReviewFilesOnUpdateTimeoutHandle: number;
+
 export async function updateSelectedCommits(
   context: ActionContext<PR, StoreRoot>,
   selectedCommits: {selectedStartCommit: string, selectedEndCommit: string}) {
-  // tslint:disable-next-line:no-console
-  console.log(selectedCommits);
   context.commit('updateSelectedCommits', selectedCommits);
+  if (loadReviewFilesOnUpdateTimeoutHandle) {
+    window.clearTimeout(loadReviewFilesOnUpdateTimeoutHandle);
+  }
+  loadReviewFilesOnUpdateTimeoutHandle = window.setTimeout(() => {
+    const {selectedStartCommit, selectedEndCommit} = selectedCommits;
+    if (selectedStartCommit === selectedEndCommit) {
+      return;
+    }
+    if (selectedStartCommit !== context.state.mergeTo.sha) {
+      // load review files
+      context.dispatch('loadCommitReviewFiles', selectedStartCommit);
+    }
+    context.dispatch('loadCommitReviewFiles', selectedEndCommit);
+  }, 500);
 }
 
 const actions: ActionTree<PR, StoreRoot> = {
