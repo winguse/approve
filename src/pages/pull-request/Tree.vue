@@ -1,6 +1,13 @@
 <template>
   <q-layout-drawer side="left" :overlay="false" v-model="showTree">
-    tree
+    <q-tree
+      :nodes="tree"
+      :selected.sync="selectedFile"
+      :expanded.sync="expandedDir"
+      label-key="name"
+      node-key="fullPath"
+      default-expand-all
+    />
   </q-layout-drawer>
 </template>
 
@@ -8,11 +15,50 @@
 </style>
 
 <script lang="ts">
-export default {
-  name: 'Tree',
-  data() {
-    return {showTree: true};
-  },
-};
+import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Store } from 'vuex';
+import { StoreRoot } from '../../store/index.d';
+
+@Component
+export default class CommitSelector extends Vue {
+  private get store() {
+    const store: Store<StoreRoot> = this.$store;
+    return store;
+  }
+
+  get selectedFile() {
+    return this.store.state.pullRequests.selectedFile;
+  }
+
+  set selectedFile(file) {
+    if (file.endsWith('/')) {
+      let expanded = [...this.expandedDir];
+      if (expanded.indexOf(file) === -1) {
+        expanded.push(file);
+      } else {
+        expanded = expanded.filter(x => x !== file);
+      }
+      this.store.commit('pullRequests/setExpendedDir', expanded);
+    } else {
+      this.store.commit('pullRequests/selectFile', file);
+    }
+  }
+
+  get expandedDir() {
+    return this.store.state.pullRequests.expendedDir;
+  }
+
+  set expandedDir(expended) {
+    this.store.commit('pullRequests/setExpendedDir', expended);
+  }
+
+  get tree() {
+    return this.store.state.pullRequests.tree;
+  }
+
+  get showTree() {
+    return true;
+  }
+}
 </script>
 

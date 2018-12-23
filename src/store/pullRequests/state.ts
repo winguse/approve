@@ -6,6 +6,8 @@ const emptyGitObj: GitObj = {
 };
 
 export const emptyState: PR = {
+  selectedFile: '',
+  expendedDir: [],
   repo: '',
   owner: '',
   loading: true,

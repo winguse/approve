@@ -59,6 +59,7 @@ module.exports = function config(ctx) {
     // framework: 'all' --- includes everything; for dev only!
     framework: {
       components: [
+        'QTree',
         'QRange',
         'QModal',
         'QField',
@@ -89,7 +90,7 @@ module.exports = function config(ctx) {
       plugins: [
         'Notify',
       ],
-      // iconSet: ctx.theme.mat ? 'material-icons' : 'ionicons'
+      iconSet: ctx.theme.mat ? 'material-icons' : 'ionicons'
       // i18n: 'de' // Quasar language
     },
     // animations: 'all' --- includes all animations

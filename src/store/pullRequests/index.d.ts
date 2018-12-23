@@ -6,18 +6,11 @@ export interface FileItem {
 }
 
 export interface TreeItem extends FileItem {
-  selected: boolean;
   icon: string;
 }
 
-export interface TreeFile extends TreeItem {
-  addition: number;
-  deletion: number;
-}
-
 export interface TreeDirectory extends TreeItem {
-  opened: boolean;
-  children: Array<TreeDirectory | TreeFile>;
+  children: Array<TreeDirectory>;
 }
 
 export interface GitObj {
@@ -82,6 +75,8 @@ export interface ReviewFile extends FileItem {
   diff?: string;
   contentUrl?: string;
   content?: string;
+  additions: number,
+  deletions: number,
 }
 
 export interface Commit {
@@ -167,7 +162,9 @@ export interface PR {
    *
    * compute base on selected two commits
    */
-  tree: Array<TreeDirectory | TreeFile>;
+  tree: Array<TreeItem>;
+  expendedDir: string[];
+  selectedFile: string;
   /**
    * the active changes to display
    *

@@ -1,5 +1,6 @@
 import log from 'js-logger';
 import { ActionContext, ActionTree } from 'vuex';
+import { sleep } from '../../utils';
 import { StoreRoot } from '../index.d';
 import { CommentState } from './enums';
 import { Comment, Commit, CommitFile, MergeBaseCommit, MergeBaseFile, PR, Review, ReviewFile } from './index.d';
@@ -7,8 +8,8 @@ import { Comment, Commit, CommitFile, MergeBaseCommit, MergeBaseFile, PR, Review
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_GRAPHQL_API_URL = GITHUB_API_BASE + '/graphql';
 
-export function clear(context: ActionContext<PR, StoreRoot>) { // TODO root state typing
-  context.commit('clear');
+export async function clear(context: ActionContext<PR, StoreRoot>) { // TODO root state typing
+  await context.commit('clear');
 }
 
 function getPullRequestInfoQuery(owner: string, repo: string, pullId: string) {
@@ -202,6 +203,8 @@ export async function load(
   }
   const commitShaList = commitList.map((commit: Commit) => commit.sha);
   const pr: PR = {
+    selectedFile: '',
+    expendedDir: [],
     repo,
     owner,
     loading: false,
@@ -254,8 +257,9 @@ export async function load(
     selectedEndCommit: headRef.target.oid,
     selectedStartCommit: baseRef.name,
   };
-  context.commit('load', pr);
-  context.dispatch('loadCommitReviewFiles', headRef.target.oid);
+  await context.commit('load', pr);
+  await context.dispatch('loadCommitReviewFiles', headRef.target.oid);
+  await context.dispatch('refreshTree');
 }
 
 export async function loadCommitReviewFiles(
@@ -288,41 +292,68 @@ export async function loadCommitReviewFiles(
   const { files, merge_base_commit: { sha: mergeBaseSha } }: { files: any[], merge_base_commit: { sha: string } } =
     await getDiff(token, owner, repo, mergeTargetBranch, sha);
   const reviewFiles: Map<string, ReviewFile> =
-    files.map(({ patch: diff, contents_url: contentUrl, filename: fullPath }: any) => {
+    files.map(({ patch: diff, contents_url: contentUrl, filename: fullPath, additions, deletions }: any) => {
       const file: ReviewFile = {
         name: fullPath.split('/').pop(),
         fullPath,
         diff,
         contentUrl,
+        additions,
+        deletions,
       };
       return file;
     }).reduce((acc, cur) => {
       acc.set(cur.fullPath, cur);
       return acc;
     }, new Map<string, ReviewFile>());
-  context.commit('loadCommitReviewFiles', { sha, reviewFiles, mergeBaseSha });
+  await context.commit('loadCommitReviewFiles', { sha, reviewFiles, mergeBaseSha });
 }
 
-let loadReviewFilesOnUpdateTimeoutHandle: number;
+let waitToken: number;
 
 export async function updateSelectedCommits(
   context: ActionContext<PR, StoreRoot>,
   selectedCommits: {selectedStartCommit: string, selectedEndCommit: string}) {
-  context.commit('updateSelectedCommits', selectedCommits);
-  if (loadReviewFilesOnUpdateTimeoutHandle) {
-    window.clearTimeout(loadReviewFilesOnUpdateTimeoutHandle);
+  await context.commit('updateSelectedCommits', selectedCommits);
+  const {selectedStartCommit, selectedEndCommit} = selectedCommits;
+  if (selectedStartCommit === selectedEndCommit) {
+    return;
   }
-  loadReviewFilesOnUpdateTimeoutHandle = window.setTimeout(() => {
-    const {selectedStartCommit, selectedEndCommit} = selectedCommits;
-    if (selectedStartCommit === selectedEndCommit) {
+
+  const myWaitToken = waitToken = Math.random();
+  await sleep(500);
+  if (myWaitToken !== waitToken) { return; }
+
+  if (selectedStartCommit !== context.state.mergeTo.branch) {
+    // load review files
+    await context.dispatch('loadCommitReviewFiles', selectedStartCommit);
+  }
+  if (myWaitToken !== waitToken) { return; }
+  await context.dispatch('loadCommitReviewFiles', selectedEndCommit);
+  if (myWaitToken !== waitToken) { return; }
+  await context.dispatch('refreshTree');
+}
+
+export async function refreshTree(context: ActionContext<PR, StoreRoot>) {
+  const { selectedStartCommit, selectedEndCommit, baseCommits, commits,
+    mergeTo: { branch } } = context.state;
+  const endCommit = commits.get(selectedEndCommit);
+  if (!endCommit) {
+    log.error('cannot find end commit, it\'s not loaded.', selectedEndCommit);
+    return;
+  }
+  const files = new Set<string>(endCommit.reviewFiles.keys());
+  if (selectedStartCommit !== branch) {
+    const startCommit = commits.get(selectedStartCommit);
+    if (!startCommit) {
+      log.error('cannot find start commit, it\'s not loaded.', selectedStartCommit);
       return;
     }
-    if (selectedStartCommit !== context.state.mergeTo.branch) {
-      // load review files
-      context.dispatch('loadCommitReviewFiles', selectedStartCommit);
-    }
-    context.dispatch('loadCommitReviewFiles', selectedEndCommit);
-  }, 500);
+    startCommit.reviewFiles.forEach((value, key) => {
+      files.add(key);
+    });
+  }
+  await context.commit('refreshTree', Array.from(files.keys()));
 }
 
 const actions: ActionTree<PR, StoreRoot> = {
@@ -330,6 +361,7 @@ const actions: ActionTree<PR, StoreRoot> = {
   load,
   loadCommitReviewFiles,
   updateSelectedCommits,
+  refreshTree,
 };
 
 export default actions;
