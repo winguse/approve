@@ -252,7 +252,7 @@ export async function load(
     commitShaList,
     baseCommits: new Map<string, MergeBaseCommit>(),
     selectedEndCommit: headRef.target.oid,
-    selectedStartCommit: baseRef.target.oid,
+    selectedStartCommit: baseRef.name,
   };
   context.commit('load', pr);
   context.dispatch('loadCommitReviewFiles', headRef.target.oid);
@@ -317,7 +317,7 @@ export async function updateSelectedCommits(
     if (selectedStartCommit === selectedEndCommit) {
       return;
     }
-    if (selectedStartCommit !== context.state.mergeTo.sha) {
+    if (selectedStartCommit !== context.state.mergeTo.branch) {
       // load review files
       context.dispatch('loadCommitReviewFiles', selectedStartCommit);
     }
