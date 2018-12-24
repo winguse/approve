@@ -3,8 +3,8 @@ import log from 'js-logger';
 import { ActionContext, ActionTree } from 'vuex';
 import { sleep } from '../../utils';
 import { StoreRoot } from '../index.d';
-import { ChangeState, CommentState } from './enums';
-import { Change, Comment, Commit, CommitFile, PR, Review, ReviewFile } from './index.d';
+import { CommentState } from './enums';
+import { Comment, Commit, CommitFile, PR, Review, ReviewFile } from './index.d';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_GRAPHQL_API_URL = GITHUB_API_BASE + '/graphql';
@@ -410,13 +410,7 @@ export async function selectFile(
   let { content: left } = await leftRequest;
   left = left ? atob(left) : '';
   right = right ? atob(right) : '';
-  const activeChanges = diff.diffLines(left, right).map(({value, added, removed}) => {
-    const change: Change = {
-      value,
-      state: added ? ChangeState.Added : ChangeState.Removed,
-    };
-    return change;
-  });
+  const activeChanges = diff.diffLines(left, right);
   await context.commit('selectFile', { selectedFile: fullPath, changes: activeChanges });
 }
 

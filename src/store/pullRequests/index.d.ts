@@ -1,4 +1,5 @@
-import { CommentState, ReviewState, ChangeState } from './enums';
+import { CommentState, ReviewState } from './enums';
+import { IDiffResult } from 'diff';
 
 export interface FileItem {
   name: string;
@@ -117,11 +118,6 @@ export interface Commit {
   reviewFiles: Map<string, ReviewFile>;
 }
 
-export interface Change {
-  state: ChangeState;
-  value: string;
-}
-
 export interface MergeTargetCommit extends GitObj {
   at: number;
   message: string;
@@ -158,6 +154,6 @@ export interface PR {
    *
    * compute base on selected two commits, file
    */
-  activeChanges: Change[];
+  activeChanges: IDiffResult[];
 }
 

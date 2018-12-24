@@ -12,8 +12,3 @@ export enum CommentState {
   WontFix = 'WontFix', // won't fix
   Closed = 'Closed',
 }
-
-export enum ChangeState {
-  Added,
-  Removed,
-}
