@@ -292,7 +292,9 @@ export async function loadCommitReviewFiles(
   const { files, merge_base_commit: { sha: mergeBaseSha } }: { files: any[], merge_base_commit: { sha: string } } =
     await getDiff(token, owner, repo, mergeTargetBranch, sha);
   const reviewFiles: Map<string, ReviewFile> =
-    files.map(({ patch: diff, contents_url: contentUrl, filename: fullPath, additions, deletions }: any) => {
+    files.map(({
+      patch: diff, contents_url: contentUrl, filename: fullPath, additions, deletions, sha: fileSha,
+    }: any) => {
       const file: ReviewFile = {
         name: fullPath.split('/').pop(),
         fullPath,
@@ -300,6 +302,7 @@ export async function loadCommitReviewFiles(
         contentUrl,
         additions,
         deletions,
+        sha: fileSha,
       };
       return file;
     }).reduce((acc, cur) => {
@@ -350,7 +353,14 @@ export async function refreshTree(context: ActionContext<PR, StoreRoot>) {
       return;
     }
     startCommit.reviewFiles.forEach((value, key) => {
-      files.add(key);
+      if (files.has(key)) {
+        const endFile = endCommit.reviewFiles.get(key);
+        if (endFile && endFile.sha === value.sha) {
+          files.delete(key);
+        }
+      } else {
+        files.add(key);
+      }
     });
   }
   await context.commit('refreshTree', Array.from(files.keys()));

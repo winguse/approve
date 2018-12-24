@@ -77,6 +77,7 @@ export interface ReviewFile extends FileItem {
   content?: string;
   additions: number,
   deletions: number,
+  sha: string;
 }
 
 export interface Commit {
