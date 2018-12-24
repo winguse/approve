@@ -40,7 +40,7 @@ export default class CommitSelector extends Vue {
       }
       this.store.commit('pullRequests/setExpendedDir', expanded);
     } else {
-      this.store.commit('pullRequests/selectFile', file);
+      this.store.dispatch('pullRequests/selectFile', file);
     }
   }
 

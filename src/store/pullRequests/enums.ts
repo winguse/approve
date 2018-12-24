@@ -14,6 +14,6 @@ export enum CommentState {
 }
 
 export enum ChangeState {
-  Added = 'Added',
-  Removed = 'Removed',
+  Added,
+  Removed,
 }

@@ -1,5 +1,5 @@
 import log from 'js-logger';
-import { PR, ReviewFile, TreeDirectory, TreeItem } from './index.d';
+import { Change, PR, ReviewFile, TreeDirectory, TreeItem } from './index.d';
 import { emptyState } from './state';
 
 export function clear(state: PR) {
@@ -123,8 +123,10 @@ export function refreshTree(state: PR, files: string[]) {
   state.tree = root;
 }
 
-export function selectFile(state: PR, selectedFile: string) {
+export function selectFile(state: PR, { selectedFile, changes: activeChanges }:
+  {selectedFile: string, changes: Change[]}) {
   state.selectedFile = selectedFile;
+  state.activeChanges  = activeChanges;
 }
 
 export function setExpendedDir(state: PR, expendedDir: string[]) {

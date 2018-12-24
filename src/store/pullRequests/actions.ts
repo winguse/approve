@@ -1,9 +1,10 @@
+import * as diff from 'diff';
 import log from 'js-logger';
 import { ActionContext, ActionTree } from 'vuex';
 import { sleep } from '../../utils';
 import { StoreRoot } from '../index.d';
-import { CommentState } from './enums';
-import { Comment, Commit, CommitFile, MergeBaseCommit, MergeBaseFile, PR, Review, ReviewFile } from './index.d';
+import { ChangeState, CommentState } from './enums';
+import { Change, Comment, Commit, CommitFile, PR, Review, ReviewFile } from './index.d';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_GRAPHQL_API_URL = GITHUB_API_BASE + '/graphql';
@@ -140,8 +141,31 @@ async function getDiff(token: string, owner: string, repo: string, from: string,
   }
   const response = await fetch(url, {
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `token ${token}`,
+      Authorization: `token ${token}`,
+    },
+  });
+  const body = await response.text();
+  // TODO clear old cache
+  localStorage.setItem(url, `${Date.now()}|${body}`);
+  return JSON.parse(body);
+}
+
+export async function getFileContent(
+  token: string,
+  owner: string,
+  repo: string,
+  fullPath: string,
+  ref: string,
+  ) {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${fullPath}?ref=${ref}`;
+  const cached = localStorage.getItem(url);
+  if (cached) { // this cache never expire
+    const timePos = cached.indexOf('|');
+    return JSON.parse(cached.slice(timePos + 1));
+  }
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `token ${token}`,
     },
   });
   const body = await response.text();
@@ -253,7 +277,6 @@ export async function load(
     }, new Map<string, Review>()),
     commits: commitsMap,
     commitShaList,
-    baseCommits: new Map<string, MergeBaseCommit>(),
     selectedEndCommit: headRef.target.oid,
     selectedStartCommit: baseRef.name,
   };
@@ -293,13 +316,12 @@ export async function loadCommitReviewFiles(
     await getDiff(token, owner, repo, mergeTargetBranch, sha);
   const reviewFiles: Map<string, ReviewFile> =
     files.map(({
-      patch: diff, contents_url: contentUrl, filename: fullPath, additions, deletions, sha: fileSha,
+      patch, filename: fullPath, additions, deletions, sha: fileSha,
     }: any) => {
       const file: ReviewFile = {
         name: fullPath.split('/').pop(),
         fullPath,
-        diff,
-        contentUrl,
+        diff: patch,
         additions,
         deletions,
         sha: fileSha,
@@ -338,7 +360,7 @@ export async function updateSelectedCommits(
 }
 
 export async function refreshTree(context: ActionContext<PR, StoreRoot>) {
-  const { selectedStartCommit, selectedEndCommit, baseCommits, commits,
+  const { selectedStartCommit, selectedEndCommit, commits,
     mergeTo: { branch } } = context.state;
   const endCommit = commits.get(selectedEndCommit);
   if (!endCommit) {
@@ -366,12 +388,45 @@ export async function refreshTree(context: ActionContext<PR, StoreRoot>) {
   await context.commit('refreshTree', Array.from(files.keys()));
 }
 
+export async function selectFile(
+  context: ActionContext<PR, StoreRoot>,
+  fullPath: string,
+) {
+  const {
+    state: { selectedStartCommit, selectedEndCommit, mergeTo: { branch }, commits, owner, repo },
+    rootState: { config: { token } },
+  } = context;
+  let leftRef = selectedStartCommit;
+  if (leftRef === branch) {
+    const endCommit = commits.get(selectedEndCommit);
+    if (!endCommit || !endCommit.mergeBaseSha) {
+      throw new Error('merge base sha should be found');
+    }
+    leftRef = endCommit.mergeBaseSha;
+  }
+  const rightRef = selectedEndCommit;
+  const leftRequest = getFileContent(token, owner, repo, fullPath, leftRef);
+  let { content: right } = await getFileContent(token, owner, repo, fullPath, rightRef);
+  let { content: left } = await leftRequest;
+  left = left ? atob(left) : '';
+  right = right ? atob(right) : '';
+  const activeChanges = diff.diffLines(left, right).map(({value, added, removed}) => {
+    const change: Change = {
+      value,
+      state: added ? ChangeState.Added : ChangeState.Removed,
+    };
+    return change;
+  });
+  await context.commit('selectFile', { selectedFile: fullPath, changes: activeChanges });
+}
+
 const actions: ActionTree<PR, StoreRoot> = {
   clear,
   load,
   loadCommitReviewFiles,
   updateSelectedCommits,
   refreshTree,
+  selectFile,
 };
 
 export default actions;

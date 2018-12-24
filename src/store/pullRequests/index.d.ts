@@ -73,8 +73,6 @@ export interface ReviewFile extends FileItem {
    *    compatible to Github's position
    */
   diff?: string;
-  contentUrl?: string;
-  content?: string;
   additions: number,
   deletions: number,
   sha: string;
@@ -132,16 +130,6 @@ export interface MergeTargetCommit extends GitObj {
   reviewFiles: ReviewFile[];
 }
 
-export interface MergeBaseFile extends FileItem {
-  contentUrl?: string;
-  content?: string;
-}
-
-export interface MergeBaseCommit {
-  sha: string;
-  baseFiles: Map<string, MergeBaseFile>;
-}
-
 export interface PR {
   repo: string;
   owner: string;
@@ -155,7 +143,6 @@ export interface PR {
   reviews: Map<string, Review>;
   commits: Map<string, Commit>;
   commitShaList: string[];
-  baseCommits: Map<string, MergeBaseCommit>;
   selectedStartCommit: string;
   selectedEndCommit: string;
   /**
