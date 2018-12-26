@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd dist
+cd dist/spa-mat
 
 git init
 git add .
