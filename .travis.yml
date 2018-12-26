@@ -1,0 +1,18 @@
+language: node_js
+node_js:
+- "10"
+
+cache:
+  yarn: true
+  directories:
+  - node_modules
+
+install:
+- yarn
+
+script:
+- rm -rf dist
+- yarn build
+
+after_success:
+- ./release-to-github-pages.sh

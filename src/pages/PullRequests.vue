@@ -5,7 +5,7 @@
         <router-link to="/">Home</router-link>
       </li>
       <li>
-        <router-link to="/winguse/winguse.github.io/pull/1">First PR</router-link>
+        <router-link to="/winguse/approve/pull/1">First PR</router-link>
       </li>
     </ul>
   </q-page>

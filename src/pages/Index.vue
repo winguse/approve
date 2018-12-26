@@ -1,6 +1,6 @@
 <template>
   <q-page class="flex flex-center">
-    <router-link to="/winguse/winguse.github.io/pulls">Pulls of winguse/winguse.github.io</router-link>
+    <router-link to="/winguse/approve/pulls">Pulls of winguse/approve</router-link>
   </q-page>
 </template>
 
