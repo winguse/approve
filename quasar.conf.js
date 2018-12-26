@@ -15,6 +15,9 @@ function extendTypescriptToWebpack(cfg) {
 
 module.exports = function config(ctx) {
   return {
+    htmlVariables: {
+      vueDevToolScript: ctx.dev ? `<script src="http://localhost:8098"></script>` : '',
+    },
     sourceFiles: {
       router: 'src/router/index.ts',
       store: 'src/store/index.ts',

@@ -44,18 +44,10 @@ fragment pageInfoFg on PageInfo {
 query getPullRequestInfo {
   repository(name: "${repo}", owner: "${owner}") {
     pullRequest(number: ${pullId}) {
-      baseRef {
-        name
-        target {
-          oid
-        }
-      }
-      headRef {
-        name
-        target {
-          oid
-        }
-      }
+      baseRefName
+      baseRefOid
+      headRefName
+      headRefOid
       changedFiles
       body
       bodyHTML
@@ -109,6 +101,9 @@ query getPullRequestInfo {
 }
 
 async function executeGraphQlQuery(query: string, token: string) {
+  if (!token) {
+    throw new Error('Github toke is needed');
+  }
   const key = `${GITHUB_GRAPHQL_API_URL}|${query}`;
   const cached = localStorage.getItem(key);
   if (cached) {
@@ -133,6 +128,9 @@ async function executeGraphQlQuery(query: string, token: string) {
 }
 
 async function getDiff(token: string, owner: string, repo: string, from: string, to: string) {
+  if (!token) {
+    throw new Error('Github toke is needed');
+  }
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/compare/${from}...${to}`;
   const cached = localStorage.getItem(url);
   if (cached) { // this cache never expire
@@ -157,6 +155,9 @@ export async function getFileContent(
   fullPath: string,
   ref: string,
   ) {
+  if (!token) {
+    throw new Error('Github toke is needed');
+  }
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${fullPath}?ref=${ref}`;
   const cached = localStorage.getItem(url);
   if (cached) { // this cache never expire
@@ -188,7 +189,8 @@ export async function load(
   const { owner, repo, pullId } = params;
   const query = getPullRequestInfoQuery(owner, repo, pullId);
   const { data: { repository: { pullRequest: {
-    baseRef, headRef, commits: { nodes: commits }, reviews: { nodes: reviews },
+    baseRefName, baseRefOid: mergeBaseSha, headRefName, headRefOid, commits: { nodes: commits },
+    reviews: { nodes: reviews },
   } } } } = await executeGraphQlQuery(query, token);
   const commitList: Commit[] = commits
     .map(({ commit: { additions, deletions, oid: sha, committedDate, messageHeadline,
@@ -204,7 +206,6 @@ export async function load(
     acc.set(cur.sha, cur);
     return acc;
   }, new Map<string, Commit>());
-  const mergeBaseSha: string = baseRef.target.oid;
   let lastCommit: Commit = commitList[commitList.length - 1];
   while (true) {
     lastCommit.mergeBaseSha = mergeBaseSha;
@@ -234,11 +235,11 @@ export async function load(
     loading: false,
     mergeTo: {
       sha: mergeBaseSha,
-      branch: baseRef.name,
+      branch: baseRefName,
     },
     mergeFrom: {
-      sha: headRef.target.oid,
-      branch: headRef.name,
+      sha: headRefOid,
+      branch: headRefName,
     },
     tree: [],
     activeChanges: [],
@@ -277,11 +278,11 @@ export async function load(
     }, new Map<string, Review>()),
     commits: commitsMap,
     commitShaList,
-    selectedEndCommit: headRef.target.oid,
-    selectedStartCommit: baseRef.name,
+    selectedEndCommit: headRefOid,
+    selectedStartCommit: baseRefName,
   };
   await context.commit('load', pr);
-  await context.dispatch('loadCommitReviewFiles', headRef.target.oid);
+  await context.dispatch('loadCommitReviewFiles', headRefOid);
   await context.dispatch('refreshTree');
 }
 
@@ -310,10 +311,10 @@ export async function loadCommitReviewFiles(
       // return;
     }
   }
-  const { rootState: { config: { token } }, state: { owner, repo, mergeTo: { branch: mergeTargetBranch } } } = context;
+  const { rootState: { config: { token } }, state: { owner, repo, mergeTo: { sha: mergeTargetSha } } } = context;
   // get branch compare
   const { files, merge_base_commit: { sha: mergeBaseSha } }: { files: any[], merge_base_commit: { sha: string } } =
-    await getDiff(token, owner, repo, mergeTargetBranch, sha);
+    await getDiff(token, owner, repo, mergeTargetSha, sha);
   const reviewFiles: Map<string, ReviewFile> =
     files.map(({
       patch, filename: fullPath, additions, deletions, sha: fileSha,

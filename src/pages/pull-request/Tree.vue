@@ -56,8 +56,10 @@ export default class CommitSelector extends Vue {
     return this.store.state.pullRequests.tree;
   }
 
-  get showTree() {
-    return true;
+  public data() {
+    return {
+      showTree: true,
+    };
   }
 }
 </script>
