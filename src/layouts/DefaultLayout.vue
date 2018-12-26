@@ -45,38 +45,43 @@
 
 <script lang="ts">
 import { openURL } from 'quasar';
+import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Store } from 'vuex';
 import Configurations from '../components/Configurations.vue';
+import { StoreRoot } from '../store/index.d';
 
-export default {
-  name: 'DefaultLayout',
-  // @ts-ignore
-  data() {
+@Component({
+  components: { Configurations },
+})
+export default class CommitSelector extends Vue {
+  private get store() {
+    const store: Store<StoreRoot> = this.$store;
+    return store;
+  }
+  public data() {
     return {
-      configOpened: false,
+      configOpened: !localStorage.getItem('token'),
     };
-  },
-  computed: {
-    title() {
-      // @ts-ignore
-      const titleFromRoute: string = this.$route.meta.title;
-      return titleFromRoute;
-    },
-    paths() {
-      // @ts-ignore
-      const { owner, repo }: { owner: string, repo: string } = this.$route.params;
-      if (repo) {
-        return ['Approve', owner, repo];
-      }
-      return [];
-    },
-  },
-  methods: {
-    openURL,
-  },
-  components: {
-    Configurations,
-  },
-};
+  }
+  get title() {
+    // @ts-ignore
+    const titleFromRoute: string = this.$route.meta.title;
+    return titleFromRoute;
+  }
+  get paths() {
+    // @ts-ignore
+    const { owner, repo }: { owner: string, repo: string } = this.$route.params;
+    if (repo) {
+      return ['Approve', owner, repo];
+    }
+    return [];
+  }
+  public openURL(url: string) {
+    // @ts-ignore
+    openUrl(url);
+  }
+
+}
 </script>
 
 <style>
