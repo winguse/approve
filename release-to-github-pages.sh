@@ -2,6 +2,8 @@
 
 cd dist/spa-mat
 
+echo rove.app > CNAME
+
 git init
 git add .
 git config user.name 'Yingyu Cheng'
