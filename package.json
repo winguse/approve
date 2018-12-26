@@ -1,0 +1,45 @@
+{
+  "name": "approve",
+  "version": "0.0.1",
+  "description": "Next generation of code review tool integrated with Github.",
+  "productName": "Approve",
+  "cordovaId": "app.rove",
+  "author": "Yingyu Cheng <github@winguse.com>",
+  "private": true,
+  "scripts": {
+    "lint": "tslint --project tsconfig.json",
+    "lint:fix": "tslint --project tsconfig.json --fix",
+    "test": "echo \"No test specified\" && exit 0",
+    "dev": "quasar dev",
+    "build": "quasar build"
+  },
+  "dependencies": {
+    "diff": "^3.5.0",
+    "js-logger": "^1.6.0",
+    "vue-class-component": "^6.3.2",
+    "vue-i18n": "^7.3.3",
+    "vue-property-decorator": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/diff": "^3.5.2",
+    "@vue/devtools": "^4.1.5",
+    "quasar-cli": "^0.17.0",
+    "strip-ansi": "=3.0.1",
+    "ts-loader": "^5.3.1",
+    "tslint": "^5.12.0",
+    "tslint-config-standard": "^8.0.1",
+    "tslint-loader": "^3.5.4",
+    "typescript": "^3.2.2",
+    "vue-parser": "^1.1.6"
+  },
+  "engines": {
+    "node": ">= 8.9.0",
+    "npm": ">= 5.6.0",
+    "yarn": ">= 1.6.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 10"
+  ]
+}
