@@ -15,8 +15,10 @@ install:
 - yarn
 
 script:
+- yarn lint
+- yarn test
 - rm -rf dist
 - yarn build
 
 after_success:
-- ./release-to-github-pages.sh
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then ./release-to-github-pages.sh; fi
