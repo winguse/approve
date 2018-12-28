@@ -412,6 +412,44 @@ export async function selectFile(
   left = left ? atob(left) : '';
   right = right ? atob(right) : '';
   const activeChanges = diff.diffLines(left, right);
+
+  let leftLine = 0;
+  let rightLine = 0;
+  activeChanges.flatMap(({value, added, removed}) =>
+    value.split('\n').map(v => ({value: v, added, removed})))
+  .map(({value, added, removed}, idx) => {
+    if (!added) { leftLine++; }
+    if (!removed) { rightLine++; }
+    if (added) {
+      return {
+        idx,
+        leftLine: '',
+        rightLine: `${rightLine}`,
+        symbol: '+',
+        color: 'green',
+        value,
+      };
+    }
+    if (removed) {
+      return {
+        idx,
+        leftLine: `${leftLine}`,
+        rightLine: '',
+        symbol: '-',
+        color: 'red',
+        value,
+      };
+    }
+    return {
+      idx,
+      leftLine: `${leftLine}`,
+      rightLine: `${rightLine}`,
+      symbol: '',
+      color: 'white',
+      value,
+    };
+  });
+
   await context.commit('selectFile', { selectedFile: fullPath, changes: activeChanges });
 }
 
