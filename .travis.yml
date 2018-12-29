@@ -23,3 +23,7 @@ script:
 
 after_success:
 - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then ./release-to-github-pages.sh; fi
+
+branches:
+  only:
+  - master
