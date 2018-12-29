@@ -22,7 +22,7 @@ modules.exports = {
 
 ' >> $TARGET
 
-mv $TARGET .
+mv $TARGET src/utils/
 
 rm -r code-prettify-master
 rm master.zip
