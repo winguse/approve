@@ -1,5 +1,4 @@
 import { CommentState, ReviewState } from './enums';
-import { IDiffResult } from 'diff';
 
 export interface FileItem {
   name: string;
@@ -118,6 +117,20 @@ export interface Commit {
   reviewFiles: Map<string, ReviewFile>;
 }
 
+export interface HightLight {
+  type: string;
+  value: string;
+}
+
+export interface ChangedLine {
+  idx: number;
+  hightLights: HightLight[];
+  added: boolean;
+  removed: boolean;
+  leftLineNumber?: number;
+  rightLineNumber?: number;
+}
+
 export interface MergeTargetCommit extends GitObj {
   at: number;
   message: string;
@@ -154,6 +167,6 @@ export interface PR {
    *
    * compute base on selected two commits, file
    */
-  activeChanges: IDiffResult[];
+  activeChanges: ChangedLine[];
 }
 

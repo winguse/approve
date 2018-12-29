@@ -1,12 +1,14 @@
 <template>
-  <div>
-    <div v-for="change in changes" :key="change.idx" :style="'background: ' + change.color">
-      <span>{{change.leftLine}}</span>
-      <span>{{change.rightLine}}</span>
-      <span>{{change.symbol}}</span>
-      <span>{{change.value}}</span>
-    </div>
-  </div>
+  <table>
+    <tbody>
+    <tr v-for="change in changes" :key="change.idx" :class="{ added: change.added, removed: change.removed}">
+      <td class="left-line-number" :data-txt="change.leftLineNumber"></td>
+      <td class="right-line-number" :data-txt="change.rightLineNumber"></td>
+      <td class="symbol"></td>
+      <td><span v-for="(hightLight, idx) in change.hightLights" :key="idx" :class="hightLight.type">{{hightLight.value}}</span></td>
+    </tr>
+    </tbody>
+  </table>
 </template>
 
 <style>
@@ -32,43 +34,7 @@ export default class CommitSelector extends Vue {
   }
 
   get changes() {
-    let leftLine = 0;
-    let rightLine = 0;
-    return this.store.state.pullRequests.activeChanges
-      .flatMap(({value, added, removed}) =>
-        value.split('\n').map(v => ({value: v, added, removed})))
-      .map(({value, added, removed}, idx) => {
-      if (!added) { leftLine++; }
-      if (!removed) { rightLine++; }
-      if (added) {
-        return {
-          idx,
-          leftLine: '',
-          rightLine: `${rightLine}`,
-          symbol: '+',
-          color: 'green',
-          value,
-        };
-      }
-      if (removed) {
-        return {
-          idx,
-          leftLine: `${leftLine}`,
-          rightLine: '',
-          symbol: '-',
-          color: 'red',
-          value,
-        };
-      }
-      return {
-        idx,
-        leftLine: `${leftLine}`,
-        rightLine: `${rightLine}`,
-        symbol: '',
-        color: 'white',
-        value,
-      };
-    });
+    return this.store.state.pullRequests.activeChanges;
   }
 }
 </script>
