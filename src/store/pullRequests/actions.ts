@@ -438,11 +438,11 @@ function refineDiffResult(diffResult: diff.IDiffResult[], added: boolean | undef
           removed,
         });
       }
-      tmp.forEach(t => diffResult.push(t));
-      return;
+      break;
     }
     tmp.unshift(last);
   }
+  tmp.forEach(t => diffResult.push(t));
 }
 
 export async function selectFile(
