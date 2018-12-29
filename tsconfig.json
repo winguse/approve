@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "allowJs": true,
     "target": "es5",
     "module": "esnext",
     "strict": true,
@@ -18,8 +17,7 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.vue",
-    "test/**/*.ts",
-    "src/utils/prettify.js"
+    "test/**/*.ts"
   ],
   "exclude": [
     ".quasar",
