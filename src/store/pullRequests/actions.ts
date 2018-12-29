@@ -1,10 +1,10 @@
 import * as diff from 'diff';
 import log from 'js-logger';
 import { ActionContext, ActionTree } from 'vuex';
-import { sleep } from '../../utils';
+import { codePrettify, sleep } from '../../utils';
 import { StoreRoot } from '../index.d';
 import { CommentState } from './enums';
-import { Comment, Commit, CommitFile, PR, Review, ReviewFile } from './index.d';
+import { ChangedLine, Comment, Commit, CommitFile, HightLight, PR, Review, ReviewFile } from './index.d';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_GRAPHQL_API_URL = GITHUB_API_BASE + '/graphql';
@@ -389,6 +389,62 @@ export async function refreshTree(context: ActionContext<PR, StoreRoot>) {
   await context.commit('refreshTree', Array.from(files.keys()));
 }
 
+function runPretty(spans: Array<number | string>, spanIdx: number, line: string, pos: number) {
+  const hightLights: HightLight[] = [];
+  const lineEnding: HightLight = {
+    value: '',
+    type: 'no-ending',
+  };
+  if (line.endsWith('\r\n')) {
+    lineEnding.type = 'rn-ending';
+    lineEnding.value = '\r\n';
+    line = line.slice(0, line.length - 2);
+  } else if (line.endsWith('\n')) {
+    lineEnding.type = 'n-ending';
+    lineEnding.value = '\n';
+    line = line.slice(0, line.length - 1);
+  }
+  while (line.length > 0) {
+    while (spans[spanIdx + 2] <= pos) { // spans will always ends with safeEndingSpan
+      spanIdx += 2;
+    }
+    // @ts-ignore
+    const currentSpanEndPos: number = spans[spanIdx + 2];
+    // @ts-ignore
+    const currentSpanType: string = spans[spanIdx + 1];
+    const cutLength = Math.min(line.length, currentSpanEndPos - pos);
+    hightLights.push({
+      type: currentSpanType,
+      value: line.slice(0, cutLength),
+    });
+    line = line.slice(cutLength);
+    pos += cutLength;
+  }
+  hightLights.push(lineEnding);
+  return { spanIdx, hightLights};
+}
+
+function refineDiffResult(diffResult: diff.IDiffResult[], added: boolean | undefined, removed: boolean | undefined) {
+  const tmp: diff.IDiffResult[] = [];
+  while (diffResult.length > 0) {
+    // @ts-ignore
+    const last: diff.IDiffResult = diffResult.pop();
+    if (last.added === added && last.removed === removed) {
+      diffResult.push(last);
+      if (last.value.endsWith('\n')) {
+        diffResult.push({
+          value: '',
+          added,
+          removed,
+        });
+      }
+      tmp.forEach(t => diffResult.push(t));
+      return;
+    }
+    tmp.unshift(last);
+  }
+}
+
 export async function selectFile(
   context: ActionContext<PR, StoreRoot>,
   fullPath: string,
@@ -411,8 +467,83 @@ export async function selectFile(
   let { content: left } = await leftRequest;
   left = left ? atob(left) : '';
   right = right ? atob(right) : '';
-  const activeChanges = diff.diffLines(left, right);
-  await context.commit('selectFile', { selectedFile: fullPath, changes: activeChanges });
+  const extension = fullPath.split('.').pop();
+  const safeEndingSpan = [Number.MAX_SAFE_INTEGER, ''];
+  const leftSpans = codePrettify(left, extension).concat(safeEndingSpan);
+  const rightSpans = codePrettify(right, extension).concat(safeEndingSpan);
+
+  const diffResult =
+    diff.diffLines(left, right)
+      .flatMap(({value, added, removed}) => {
+        let startPos = 0;
+        const result: diff.IDiffResult[] = [];
+        while (startPos < value.length) {
+          let endPos = value.indexOf('\n', startPos) + 1;
+          if (endPos === 0) {
+            endPos = value.length;
+          }
+          result.push({
+            value: value.slice(startPos, endPos),
+            added,
+            removed,
+          });
+          startPos = endPos;
+        }
+        return result;
+      });
+
+  // refine the line ending diff
+  if (diffResult.length) {
+    const { added, removed } = diffResult[diffResult.length - 1];
+    refineDiffResult(diffResult, added, removed);
+    refineDiffResult(diffResult, removed, added);
+  }
+
+  let leftLineNumber = 0;
+  let rightLineNumber = 0;
+  let leftPos = 0;
+  let rightPos = 0;
+  let leftSpanIdx = 0;
+  let rightSpanIdx = 0;
+  const activeChanges =
+    diffResult
+    .map(({value, added, removed}, idx) => {
+      let pickedHightLights: HightLight[] = [];
+      if (!added) {
+        const { spanIdx, hightLights } = runPretty(leftSpans, leftSpanIdx, value, leftPos);
+        leftPos += value.length;
+        leftSpanIdx = spanIdx;
+        pickedHightLights = hightLights;
+        leftLineNumber++;
+      }
+      if (!removed) {
+        const { spanIdx, hightLights } = runPretty(rightSpans, rightSpanIdx, value, rightPos);
+        rightPos += value.length;
+        rightSpanIdx = spanIdx;
+        pickedHightLights = hightLights;
+        rightLineNumber++;
+      }
+      const result: ChangedLine = {
+        idx,
+        hightLights: [],
+        added: !!added,
+        removed: !!removed,
+      };
+      if (added) {
+        result.hightLights = pickedHightLights;
+        result.rightLineNumber = rightLineNumber;
+      } else if (removed) {
+        result.hightLights = pickedHightLights;
+        result.leftLineNumber = leftLineNumber;
+      } else {
+        result.hightLights = pickedHightLights;
+        result.leftLineNumber = leftLineNumber;
+        result.rightLineNumber = rightLineNumber;
+      }
+      return result;
+    });
+
+  await context.commit('selectFile', { selectedFile: fullPath, activeChanges });
 }
 
 const actions: ActionTree<PR, StoreRoot> = {

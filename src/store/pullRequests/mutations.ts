@@ -1,6 +1,5 @@
-import { IDiffResult } from 'diff';
 import log from 'js-logger';
-import { PR, ReviewFile, TreeDirectory, TreeItem } from './index.d';
+import { ChangedLine, PR, ReviewFile, TreeDirectory, TreeItem } from './index.d';
 import { emptyState } from './state';
 
 export function clear(state: PR) {
@@ -124,10 +123,10 @@ export function refreshTree(state: PR, files: string[]) {
   state.tree = root;
 }
 
-export function selectFile(state: PR, { selectedFile, changes: activeChanges }:
-  {selectedFile: string, changes: IDiffResult[]}) {
+export function selectFile(state: PR, { selectedFile, activeChanges }:
+  {selectedFile: string, activeChanges: ChangedLine[]}) {
   state.selectedFile = selectedFile;
-  state.activeChanges  = activeChanges;
+  state.activeChanges = activeChanges;
 }
 
 export function setExpendedDir(state: PR, expendedDir: string[]) {

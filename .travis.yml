@@ -13,6 +13,7 @@ before_install:
 
 install:
 - yarn
+- ./download-google-code-prettify.sh
 
 script:
 - yarn lint

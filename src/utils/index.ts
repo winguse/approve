@@ -1,4 +1,6 @@
 import { ComputedOptions } from 'vue';
+// @ts-ignore
+import prettify from './prettify.js';
 
 export interface Computed {
   [key: string]: ComputedOptions<string>;
@@ -29,4 +31,14 @@ export async function sleep(time: number) {
   await new Promise(resolve => {
     setTimeout(resolve, time);
   });
+}
+
+export function codePrettify(sourceCode: string, extension: string | null | undefined): Array<number | string> {
+  const job = {
+    basePos: 0,
+    sourceCode,
+    decorations: [],
+  };
+  prettify.langHandlerForExtension(extension, sourceCode)(job);
+  return job.decorations;
 }
