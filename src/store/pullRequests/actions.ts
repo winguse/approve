@@ -391,6 +391,19 @@ export async function refreshTree(context: ActionContext<PR, StoreRoot>) {
 
 function runPretty(spans: Array<number | string>, spanIdx: number, line: string, pos: number) {
   const hightLights: HightLight[] = [];
+  const lineEnding: HightLight = {
+    value: '',
+    type: 'no-ending',
+  };
+  if (line.endsWith('\r\n')) {
+    lineEnding.type = 'rn-ending';
+    lineEnding.value = '\r\n';
+    line = line.slice(0, line.length - 2);
+  } else if (line.endsWith('\n')) {
+    lineEnding.type = 'n-ending';
+    lineEnding.value = '\n';
+    line = line.slice(0, line.length - 1);
+  }
   while (line.length > 0) {
     while (spans[spanIdx + 2] <= pos) { // spans will always ends with safeEndingSpan
       spanIdx += 2;
@@ -407,8 +420,29 @@ function runPretty(spans: Array<number | string>, spanIdx: number, line: string,
     line = line.slice(cutLength);
     pos += cutLength;
   }
-  pos++; // count the line end
-  return { pos, spanIdx, hightLights};
+  hightLights.push(lineEnding);
+  return { spanIdx, hightLights};
+}
+
+function refineDiffResult(diffResult: diff.IDiffResult[], added: boolean | undefined, removed: boolean | undefined) {
+  const tmp: diff.IDiffResult[] = [];
+  while (diffResult.length > 0) {
+    // @ts-ignore
+    const last: diff.IDiffResult = diffResult.pop();
+    if (last.added === added && last.removed === removed) {
+      diffResult.push(last);
+      if (last.value.endsWith('\n')) {
+        diffResult.push({
+          value: '',
+          added,
+          removed,
+        });
+      }
+      tmp.forEach(t => diffResult.push(t));
+      return;
+    }
+    tmp.unshift(last);
+  }
 }
 
 export async function selectFile(
@@ -438,6 +472,33 @@ export async function selectFile(
   const leftSpans = codePrettify(left, extension).concat(safeEndingSpan);
   const rightSpans = codePrettify(right, extension).concat(safeEndingSpan);
 
+  const diffResult =
+    diff.diffLines(left, right)
+      .flatMap(({value, added, removed}) => {
+        let startPos = 0;
+        const result: diff.IDiffResult[] = [];
+        while (startPos < value.length) {
+          let endPos = value.indexOf('\n', startPos) + 1;
+          if (endPos === 0) {
+            endPos = value.length;
+          }
+          result.push({
+            value: value.slice(startPos, endPos),
+            added,
+            removed,
+          });
+          startPos = endPos;
+        }
+        return result;
+      });
+
+  // refine the line ending diff
+  if (diffResult.length) {
+    const { added, removed } = diffResult[diffResult.length - 1];
+    refineDiffResult(diffResult, added, removed);
+    refineDiffResult(diffResult, removed, added);
+  }
+
   let leftLineNumber = 0;
   let rightLineNumber = 0;
   let leftPos = 0;
@@ -445,22 +506,19 @@ export async function selectFile(
   let leftSpanIdx = 0;
   let rightSpanIdx = 0;
   const activeChanges =
-    diff.diffLines(left, right)
-    .flatMap(({value, added, removed}) =>
-      value.split('\n').map(v => ({value: v, added, removed})),
-    )
+    diffResult
     .map(({value, added, removed}, idx) => {
       let pickedHightLights: HightLight[] = [];
       if (!added) {
-        const { pos, spanIdx, hightLights } = runPretty(leftSpans, leftSpanIdx, value, leftPos);
-        leftPos = pos;
+        const { spanIdx, hightLights } = runPretty(leftSpans, leftSpanIdx, value, leftPos);
+        leftPos += value.length;
         leftSpanIdx = spanIdx;
         pickedHightLights = hightLights;
         leftLineNumber++;
       }
       if (!removed) {
-        const { pos, spanIdx, hightLights } = runPretty(rightSpans, rightSpanIdx, value, rightPos);
-        rightPos = pos;
+        const { spanIdx, hightLights } = runPretty(rightSpans, rightSpanIdx, value, rightPos);
+        rightPos += value.length;
         rightSpanIdx = spanIdx;
         pickedHightLights = hightLights;
         rightLineNumber++;
