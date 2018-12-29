@@ -12,7 +12,7 @@ cat code-prettify-master/src/lang-*.js >> $TARGET
 
 echo '
 
-modules.exports = {
+export default {
   prettyPrint,
   prettyPrintOne,
   langHandlerForExtension,
