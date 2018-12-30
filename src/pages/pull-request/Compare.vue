@@ -1,7 +1,7 @@
 <template>
   <table class="diff-table">
     <tbody data-diff-root="true" @click="checkSelection">
-    <tr v-for="change in changes" :key="change.idx" :class="{ added: change.added, removed: change.removed, line: true}">
+    <tr v-for="change in changes" :key="change.idx" :data-idx="change.idx" :class="{ added: change.added, removed: change.removed, line: true}">
       <td class="line-number" :data-txt="change.leftLineNumber"></td>
       <td class="line-number" :data-txt="change.rightLineNumber"></td>
       <td class="symbol"></td>
@@ -27,6 +27,7 @@
   .line {
     .symbol {
       text-align: center;
+      user-select: none;
     }
     &.added {
       background: #e6ffed;
@@ -87,26 +88,58 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Store } from 'vuex';
 import { StoreRoot } from '../../store/index.d';
 
-function selectedInsideDiffTable(commonAncestorContainer: Node): boolean {
-  if (commonAncestorContainer.nodeType === Node.TEXT_NODE) {
-    const td = commonAncestorContainer.parentElement && commonAncestorContainer.parentElement.parentElement;
-    return !! (td && td.tagName === 'TD' && td.className === 'code');
-  }
-  if (commonAncestorContainer.nodeType !== Node.ELEMENT_NODE) {
+function selectedInsideDiffTable(range: Range): boolean {
+    const { commonAncestorContainer, collapsed } = range;
+    let ancestor: Node | null = commonAncestorContainer;
+    for (let i = 0; i < 5; i++) {
+      if (!ancestor) {
+        return false;
+      }
+      // @ts-ignore
+      if (ancestor.localName === 'tbody') {
+        if ((ancestor as HTMLElement).dataset.diffRoot) {
+          return true;
+        }
+        return false;
+      }
+      ancestor = ancestor.parentElement;
+    }
     return false;
-  }
-  let ele = commonAncestorContainer as HTMLElement;
-  for (let i = 0; i < 3; i++) {
-    if (ele.tagName === 'TBODY' && ele.dataset.diffRoot) {
-      return true;
-    }
-    if (ele.parentNode === null) {
-      return false;
-    }
-    ele = ele.parentNode as HTMLElement;
-  }
+}
 
-  return false;
+function getPreviousLength(node: Node | null): number {
+  if (!node) {
+    return 0;
+  }
+  if (node.nodeType === Node.TEXT_NODE) {
+    node = node.parentElement; // span
+    let l = 0;
+    while (node) {
+      l += (node.textContent || '').length;
+      node = node.previousSibling;
+    }
+    return l;
+  }
+  // for other case, it will be 0
+  return 0;
+}
+
+function getChangeIdx(ele: Node | null): number {
+  for (let i = 0; i < 5; i++) {
+    if (!ele) {
+      return -1;
+    }
+    // @ts-ignore
+    if (ele.localName === 'tr') {
+      const { idx } = (ele as HTMLElement).dataset;
+      if (idx) {
+        return +idx;
+      }
+      return -1;
+    }
+    ele = ele.parentElement;
+  }
+  return -1;
 }
 
 @Component
@@ -126,17 +159,57 @@ export default class CommitSelector extends Vue {
   public checkSelection(event: Event) {
     const selection = getSelection();
     if (selection.rangeCount === 0) {
+      // tslint:disable-next-line:no-console
+      // console.log('no: 0');
       return;
     }
     const range = selection.getRangeAt(0);
-    const { commonAncestorContainer, collapsed } = range;
-    if (collapsed || !selectedInsideDiffTable(commonAncestorContainer)) {
+    if (!selectedInsideDiffTable(range)) {
       // tslint:disable-next-line:no-console
-      console.log('no');
+      // console.log('no');
       return;
     }
+    const { startContainer, endContainer } = range;
+    let { startOffset, endOffset } = range;
+    startOffset += getPreviousLength(startContainer);
+    endOffset += getPreviousLength(endContainer);
+    const startIdx = getChangeIdx(startContainer);
+    const endIdx = getChangeIdx(endContainer);
+    if (startIdx < 0 || endIdx < 0) {
+      // unexpected selection
+      // tslint:disable-next-line:no-console
+      // console.log('unexpected selection');
+      return;
+    }
+    const changes = this.changes;
+    const start = changes[startIdx];
+    const end = changes[endIdx];
+    let added = false;
+    let removed = false;
+    for (let i = startIdx; i <= endIdx; i++) {
+      if (changes[i].added) {
+        added = true;
+      }
+      if (changes[i].removed) {
+        removed = true;
+      }
+    }
+    if (added && removed) {
+      // tslint:disable-next-line:no-console
+      // console.log('corss add / remove');
+      return;
+    }
+    const { state: { pullRequests: { selectedStartCommit, selectedEndCommit } } } = this.store;
+    const sha = removed ? selectedStartCommit : selectedEndCommit;
+    const result = {
+      sha,
+      startLine: removed ? start.leftLineNumber : start.rightLineNumber,
+      startOffset,
+      endLine: removed ? end.leftLineNumber : end.rightLineNumber,
+      endOffset,
+    };
     // tslint:disable-next-line:no-console
-    console.log('yes');
+    console.log(result);
   }
 
   get changes() {
