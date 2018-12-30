@@ -1,6 +1,6 @@
 <template>
   <table class="diff-table">
-    <tbody>
+    <tbody data-diff-root="true" @click="checkSelection">
     <tr v-for="change in changes" :key="change.idx" :class="{ added: change.added, removed: change.removed, line: true}">
       <td class="line-number" :data-txt="change.leftLineNumber"></td>
       <td class="line-number" :data-txt="change.rightLineNumber"></td>
@@ -87,6 +87,28 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Store } from 'vuex';
 import { StoreRoot } from '../../store/index.d';
 
+function selectedInsideDiffTable(commonAncestorContainer: Node): boolean {
+  if (commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+    const td = commonAncestorContainer.parentElement && commonAncestorContainer.parentElement.parentElement;
+    return !! (td && td.tagName === 'TD' && td.className === 'code');
+  }
+  if (commonAncestorContainer.nodeType !== Node.ELEMENT_NODE) {
+    return false;
+  }
+  let ele = commonAncestorContainer as HTMLElement;
+  for (let i = 0; i < 3; i++) {
+    if (ele.tagName === 'TBODY' && ele.dataset.diffRoot) {
+      return true;
+    }
+    if (ele.parentNode === null) {
+      return false;
+    }
+    ele = ele.parentNode as HTMLElement;
+  }
+
+  return false;
+}
+
 @Component
 export default class CommitSelector extends Vue {
   private get store() {
@@ -99,6 +121,22 @@ export default class CommitSelector extends Vue {
     const { owner, repo, pullId }: { owner: string, repo: string, pullId: string } = this.$route.params;
     // @ts-ignore
     this.$store.dispatch('pullRequests/load', { owner, repo, pullId });
+  }
+
+  public checkSelection(event: Event) {
+    const selection = getSelection();
+    if (selection.rangeCount === 0) {
+      return;
+    }
+    const range = selection.getRangeAt(0);
+    const { commonAncestorContainer, collapsed } = range;
+    if (collapsed || !selectedInsideDiffTable(commonAncestorContainer)) {
+      // tslint:disable-next-line:no-console
+      console.log('no');
+      return;
+    }
+    // tslint:disable-next-line:no-console
+    console.log('yes');
   }
 
   get changes() {
