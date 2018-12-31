@@ -228,6 +228,7 @@ export async function load(
   }
   const commitShaList = commitList.map((commit: Commit) => commit.sha);
   const pr: PR = {
+    activeComments: [],
     selectedFile: '',
     expendedDir: [],
     repo,
@@ -544,6 +545,13 @@ export async function selectFile(
     });
 
   await context.commit('selectFile', { selectedFile: fullPath, activeChanges });
+}
+
+export async function computeComments(
+  context: ActionContext<PR, StoreRoot>,
+) {
+  const { state: { selectedFile, activeChanges } } = context;
+  // TODO
 }
 
 const actions: ActionTree<PR, StoreRoot> = {

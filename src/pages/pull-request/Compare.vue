@@ -11,7 +11,10 @@
       name="add_comment"
       @click.stop.native="openCommentInput"
     /></td>
-      <td class="code"><span v-for="(hightLight, idx) in change.hightLights" :key="idx" :class="hightLight.type">{{hightLight.value}}</span></td>
+      <decoration
+        :hightLights="change.hightLights"
+        :activeComments="activeComments"
+      />
     </tr>
     </tbody>
   </table>
@@ -108,8 +111,9 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Store } from 'vuex';
+import Decoration from '../../components/Decoration.vue';
 import { StoreRoot } from '../../store/index.d';
-import { PR } from '../../store/pullRequests/index.d';
+import { ChangeSelection, PR } from '../../store/pullRequests/index.d';
 
 function selectedInsideDiffTable(range: Range): boolean {
   const { commonAncestorContainer } = range;
@@ -163,16 +167,6 @@ function getChangeIdx(ele: Node | null): number {
     ele = ele.parentElement;
   }
   return -1;
-}
-
-interface ChangeSelection {
-  sha: string;
-  startLine: number;
-  startOffset: number;
-  endLine: number;
-  endOffset: number;
-  startIdx: number;
-  endIdx: number;
 }
 
 function calculateSelection(pullRequests: PR): ChangeSelection | undefined {
@@ -237,7 +231,9 @@ function calculateSelection(pullRequests: PR): ChangeSelection | undefined {
   return result;
 }
 
-@Component
+@Component({
+  components: { Decoration },
+})
 export default class CommitSelector extends Vue {
   private get store() {
     const store: Store<StoreRoot> = this.$store;
@@ -282,6 +278,10 @@ export default class CommitSelector extends Vue {
 
   get changes() {
     return this.store.state.pullRequests.activeChanges;
+  }
+
+  get activeComments() {
+    return this.store.state.pullRequests.activeComments;
   }
 }
 </script>

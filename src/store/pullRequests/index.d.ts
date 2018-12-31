@@ -49,6 +49,28 @@ export interface Comment extends UserInfo {
   detailPos?: DetailPosition;
 }
 
+export interface ActiveCommentReply extends UserInfo {
+  message: string;
+  html: string;
+  at: number;
+  id: number;
+}
+
+export interface ActiveComment extends UserInfo {
+  state: CommentState;
+  message: string;
+  html: string;
+  at: number;
+  id: number;
+  replies: ActiveCommentReply[];
+  path: string;
+  sha: string;
+  // github native comment position is base on diff from: compare/<merge_target_branch>...<commit_sha>
+  githubPosition: number;
+  line: number;
+  detailPos?: DetailPosition;
+}
+
 export interface Review extends UserInfo {
   state: ReviewState;
   at: number;
@@ -168,5 +190,15 @@ export interface PR {
    * compute base on selected two commits, file
    */
   activeChanges: ChangedLine[];
+  activeComments: ActiveComment[];
 }
 
+export interface ChangeSelection {
+  sha: string;
+  startLine: number;
+  startOffset: number;
+  endLine: number;
+  endOffset: number;
+  startIdx: number;
+  endIdx: number;
+}

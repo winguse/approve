@@ -6,6 +6,7 @@ const emptyGitObj: GitObj = {
 };
 
 export const emptyState: PR = {
+  activeComments: [],
   selectedFile: '',
   expendedDir: [],
   repo: '',
