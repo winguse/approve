@@ -1,17 +1,37 @@
 <template>
+  <div class="diff-table-wrapper">
   <table class="diff-table">
-    <tbody data-diff-root="true" @click="checkSelection">
+    <tbody data-diff-root="true">
     <tr v-for="change in changes" :key="change.idx" :data-idx="change.idx" :class="{ added: change.added, removed: change.removed, line: true}">
       <td class="line-number" :data-txt="change.leftLineNumber"></td>
       <td class="line-number" :data-txt="change.rightLineNumber"></td>
-      <td class="symbol"></td>
+      <td class="symbol"><q-icon
+      v-if="addCommentIdx === change.idx"
+      class="add-comment-button text-primary"
+      name="add_comment"
+      @click.stop.native="openCommentInput"
+    /></td>
       <td class="code"><span v-for="(hightLight, idx) in change.hightLights" :key="idx" :class="hightLight.type">{{hightLight.value}}</span></td>
     </tr>
     </tbody>
   </table>
+  </div>
 </template>
 
 <style lang="stylus">
+.diff-table-wrapper {
+  position: relative;
+  .add-comment-button {
+    position: absolute;
+    font-size: 18px;
+    top: 0px;
+    left: 0px;
+    cursor: pointer;
+    &:HOVER {
+      opacity: 0.9;
+    }
+  }
+}
 .diff-table {
   border-spacing: 0;
   width: 100%;
@@ -28,6 +48,8 @@
     .symbol {
       text-align: center;
       user-select: none;
+      position: relative;
+      width: 20px;
     }
     &.added {
       background: #e6ffed;
@@ -87,24 +109,25 @@
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Store } from 'vuex';
 import { StoreRoot } from '../../store/index.d';
+import { PR } from '../../store/pullRequests/index.d';
 
 function selectedInsideDiffTable(range: Range): boolean {
-    const { commonAncestorContainer, collapsed } = range;
-    let ancestor: Node | null = commonAncestorContainer;
-    for (let i = 0; i < 5; i++) {
-      if (!ancestor) {
-        return false;
-      }
-      // @ts-ignore
-      if (ancestor.localName === 'tbody') {
-        if ((ancestor as HTMLElement).dataset.diffRoot) {
-          return true;
-        }
-        return false;
-      }
-      ancestor = ancestor.parentElement;
+  const { commonAncestorContainer } = range;
+  let ancestor: Node | null = commonAncestorContainer;
+  for (let i = 0; i < 5; i++) {
+    if (!ancestor) {
+      return false;
     }
-    return false;
+    // @ts-ignore
+    if (ancestor.localName === 'tbody') {
+      if ((ancestor as HTMLElement).dataset.diffRoot) {
+        return true;
+      }
+      return false;
+    }
+    ancestor = ancestor.parentElement;
+  }
+  return false;
 }
 
 function getPreviousLength(node: Node | null): number {
@@ -142,11 +165,89 @@ function getChangeIdx(ele: Node | null): number {
   return -1;
 }
 
+interface ChangeSelection {
+  sha: string;
+  startLine: number;
+  startOffset: number;
+  endLine: number;
+  endOffset: number;
+  startIdx: number;
+  endIdx: number;
+}
+
+function calculateSelection(pullRequests: PR): ChangeSelection | undefined {
+  const selection = getSelection();
+  if (selection.rangeCount === 0) {
+    // tslint:disable-next-line:no-console
+    // console.log('no: 0');
+    return;
+  }
+  const range = selection.getRangeAt(0);
+  if (range.collapsed) {
+    return;
+  }
+  if (!selectedInsideDiffTable(range)) {
+    // tslint:disable-next-line:no-console
+    // console.log('no');
+    return;
+  }
+  const { startContainer, endContainer } = range;
+  let { startOffset, endOffset } = range;
+  startOffset += getPreviousLength(startContainer);
+  endOffset += getPreviousLength(endContainer);
+  const startIdx = getChangeIdx(startContainer);
+  const endIdx = getChangeIdx(endContainer);
+  if (startIdx < 0 || endIdx < 0) {
+    // unexpected selection
+    // tslint:disable-next-line:no-console
+    // console.log('unexpected selection');
+    return;
+  }
+  const { activeChanges: changes } = pullRequests;
+  const start = changes[startIdx];
+  const end = changes[endIdx];
+  let added = false;
+  let removed = false;
+  for (let i = startIdx; i <= endIdx; i++) {
+    if (changes[i].added) {
+      added = true;
+    }
+    if (changes[i].removed) {
+      removed = true;
+    }
+  }
+  if (added && removed) {
+    // tslint:disable-next-line:no-console
+    // console.log('corss add / remove');
+    return;
+  }
+  const { selectedStartCommit, selectedEndCommit } = pullRequests;
+  const sha = removed ? selectedStartCommit : selectedEndCommit;
+  const result: ChangeSelection = {
+    sha,
+    startLine: (removed ? start.leftLineNumber : start.rightLineNumber) || -1,
+    startOffset,
+    endLine: (removed ? end.leftLineNumber : end.rightLineNumber) || -1,
+    endOffset,
+    startIdx,
+    endIdx,
+  };
+  // tslint:disable-next-line:no-console
+  // console.log(result);
+  return result;
+}
+
 @Component
 export default class CommitSelector extends Vue {
   private get store() {
     const store: Store<StoreRoot> = this.$store;
     return store;
+  }
+
+  public data() {
+    return {
+      addCommentIdx: -1,
+    };
   }
 
   public beforeCreate() {
@@ -156,60 +257,27 @@ export default class CommitSelector extends Vue {
     this.$store.dispatch('pullRequests/load', { owner, repo, pullId });
   }
 
+  public mounted() {
+    document.addEventListener('selectionchange', this.checkSelection);
+  }
+
+  public destroyed() {
+    document.removeEventListener('selectionchange', this.checkSelection);
+  }
+
+  public openCommentInput() {
+    //
+  }
+
   public checkSelection(event: Event) {
-    const selection = getSelection();
-    if (selection.rangeCount === 0) {
-      // tslint:disable-next-line:no-console
-      // console.log('no: 0');
+    const selection = calculateSelection(this.store.state.pullRequests);
+    if (!selection) {
+      // @ts-ignore
+      this.addCommentIdx = -1;
       return;
     }
-    const range = selection.getRangeAt(0);
-    if (!selectedInsideDiffTable(range)) {
-      // tslint:disable-next-line:no-console
-      // console.log('no');
-      return;
-    }
-    const { startContainer, endContainer } = range;
-    let { startOffset, endOffset } = range;
-    startOffset += getPreviousLength(startContainer);
-    endOffset += getPreviousLength(endContainer);
-    const startIdx = getChangeIdx(startContainer);
-    const endIdx = getChangeIdx(endContainer);
-    if (startIdx < 0 || endIdx < 0) {
-      // unexpected selection
-      // tslint:disable-next-line:no-console
-      // console.log('unexpected selection');
-      return;
-    }
-    const changes = this.changes;
-    const start = changes[startIdx];
-    const end = changes[endIdx];
-    let added = false;
-    let removed = false;
-    for (let i = startIdx; i <= endIdx; i++) {
-      if (changes[i].added) {
-        added = true;
-      }
-      if (changes[i].removed) {
-        removed = true;
-      }
-    }
-    if (added && removed) {
-      // tslint:disable-next-line:no-console
-      // console.log('corss add / remove');
-      return;
-    }
-    const { state: { pullRequests: { selectedStartCommit, selectedEndCommit } } } = this.store;
-    const sha = removed ? selectedStartCommit : selectedEndCommit;
-    const result = {
-      sha,
-      startLine: removed ? start.leftLineNumber : start.rightLineNumber,
-      startOffset,
-      endLine: removed ? end.leftLineNumber : end.rightLineNumber,
-      endOffset,
-    };
-    // tslint:disable-next-line:no-console
-    console.log(result);
+    // @ts-ignore
+    this.addCommentIdx = selection.endIdx;
   }
 
   get changes() {
