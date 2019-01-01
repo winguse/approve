@@ -247,7 +247,6 @@ export async function load(
   }
   const commitShaList = commitList.map((commit: Commit) => commit.sha);
   const pr: PR = {
-    activeComments: [],
     selectedFile: '',
     expendedDir: [],
     repo,
@@ -499,72 +498,10 @@ function diffLines(left: string, right: string): DiffResult[] {
 
 export async function selectFile(
   context: ActionContext<PR, StoreRoot>,
-  fullPath: string,
+  selectedFile: string,
 ) {
-  const {
-    state: { selectedStartCommit, selectedEndCommit, mergeTo: { branch }, commits, owner, repo },
-    rootState: { config: { token } },
-  } = context;
-  let leftRef = selectedStartCommit;
-  if (leftRef === branch) {
-    const endCommit = commits.get(selectedEndCommit);
-    if (!endCommit || !endCommit.mergeBaseSha) {
-      throw new Error('merge base sha should be found');
-    }
-    leftRef = endCommit.mergeBaseSha;
-  }
-  const rightRef = selectedEndCommit;
-  const leftRequest = getFileContentString(token, owner, repo, fullPath, leftRef);
-  const right = await getFileContentString(token, owner, repo, fullPath, rightRef);
-  const left = await leftRequest;
-  const extension = fullPath.split('.').pop();
-  const safeEndingSpan = [Number.MAX_SAFE_INTEGER, ''];
-  const leftSpans = codePrettify(left, extension).concat(safeEndingSpan);
-  const rightSpans = codePrettify(right, extension).concat(safeEndingSpan);
-
-  const diffResult = diffLines(left, right);
-
-  // refine the line ending diff
-  if (diffResult.length) {
-    const { added, removed } = diffResult[diffResult.length - 1];
-    refineDiffResult(diffResult, added, removed);
-    refineDiffResult(diffResult, removed, added);
-  }
-
-  let leftPos = 0;
-  let rightPos = 0;
-  let leftSpanIdx = 0;
-  let rightSpanIdx = 0;
-  const activeChanges =
-    diffResult
-    .map(({value, added, removed, leftLineNumber, rightLineNumber}, idx) => {
-      let pickedHightLights: HightLight[] = [];
-      if (!added) {
-        const { spanIdx, hightLights } = runPretty(leftSpans, leftSpanIdx, value, leftPos);
-        leftPos += value.length;
-        leftSpanIdx = spanIdx;
-        pickedHightLights = hightLights;
-      }
-      if (!removed) {
-        const { spanIdx, hightLights } = runPretty(rightSpans, rightSpanIdx, value, rightPos);
-        rightPos += value.length;
-        rightSpanIdx = spanIdx;
-        pickedHightLights = hightLights;
-      }
-      const result: ChangedLine = {
-        idx,
-        hightLights: [],
-        added: !!added,
-        removed: !!removed,
-      };
-      result.hightLights = pickedHightLights;
-      result.leftLineNumber = leftLineNumber;
-      result.rightLineNumber = rightLineNumber;
-      return result;
-    });
-
-  await context.commit('selectFile', { selectedFile: fullPath, activeChanges });
-  context.dispatch('computeComments');
+  await context.commit('selectFile', selectedFile);
+  await context.dispatch('computeComments');
 }
 
 function convertPositionFromSourceFile(source: string, target: string, sourcePos: DetailPosition):
@@ -651,14 +588,73 @@ export async function convertPosition(
   return undefined;
 }
 
-export async function computeComments(
-  context: ActionContext<PR, StoreRoot>,
-) {
+export async function computeComments(context: ActionContext<PR, StoreRoot>) {
+  // tslint:disable-next-line:no-console
+  console.log('compute');
   const {
-    state: { selectedFile, activeChanges, comments, selectedStartCommit, selectedEndCommit, owner
-    , repo },
+    state: { comments, selectedStartCommit, selectedEndCommit, owner, mergeTo: { branch }, commits
+    , repo, newComment, selectedFile },
     rootState: { config: { token } },
   } = context;
+
+  let leftRef = selectedStartCommit;
+  if (leftRef === branch) {
+    const endCommit = commits.get(selectedEndCommit);
+    if (!endCommit || !endCommit.mergeBaseSha) {
+      throw new Error('merge base sha should be found');
+    }
+    leftRef = endCommit.mergeBaseSha;
+  }
+  const rightRef = selectedEndCommit;
+  const leftRequest = getFileContentString(token, owner, repo, selectedFile, leftRef);
+  const right = await getFileContentString(token, owner, repo, selectedFile, rightRef);
+  const left = await leftRequest;
+  const extension = selectedFile.split('.').pop();
+  const safeEndingSpan = [Number.MAX_SAFE_INTEGER, ''];
+  const leftSpans = codePrettify(left, extension).concat(safeEndingSpan);
+  const rightSpans = codePrettify(right, extension).concat(safeEndingSpan);
+
+  const diffResult = diffLines(left, right);
+
+  // refine the line ending diff
+  if (diffResult.length) {
+    const { added, removed } = diffResult[diffResult.length - 1];
+    refineDiffResult(diffResult, added, removed);
+    refineDiffResult(diffResult, removed, added);
+  }
+
+  let leftPos = 0;
+  let rightPos = 0;
+  let leftSpanIdx = 0;
+  let rightSpanIdx = 0;
+  const activeChanges =
+    diffResult
+    .map(({value, added, removed, leftLineNumber, rightLineNumber}, idx) => {
+      let pickedHightLights: HightLight[] = [];
+      if (!added) {
+        const { spanIdx, hightLights } = runPretty(leftSpans, leftSpanIdx, value, leftPos);
+        leftPos += value.length;
+        leftSpanIdx = spanIdx;
+        pickedHightLights = hightLights;
+      }
+      if (!removed) {
+        const { spanIdx, hightLights } = runPretty(rightSpans, rightSpanIdx, value, rightPos);
+        rightPos += value.length;
+        rightSpanIdx = spanIdx;
+        pickedHightLights = hightLights;
+      }
+      const result: ChangedLine = {
+        idx,
+        hightLights: [],
+        added: !!added,
+        removed: !!removed,
+      };
+      result.hightLights = pickedHightLights;
+      result.leftLineNumber = leftLineNumber;
+      result.rightLineNumber = rightLineNumber;
+      return result;
+    });
+
   const commentOnCurrentFile = comments.filter(c => c.path === selectedFile);
   const commentsMap = commentOnCurrentFile
     .reduce((map, comment) => {
@@ -684,6 +680,9 @@ export async function computeComments(
       }
     });
   const activeComments = Array.from(commentsMap.values());
+  if (newComment) {
+    activeComments.push(newComment);
+  }
   let changesWithComments = activeChanges;
   for (const comment of activeComments) {
     const newPos = await convertPosition(
@@ -707,7 +706,7 @@ export async function computeComments(
       const endPos = currentLine === detailPos.end.line ? detailPos.end.position : Number.MAX_SAFE_INTEGER;
       let s = 0;
       const hightLights = change.hightLights.flatMap(hl => {
-        const { value, type, commentIds, lastHighlightOfCommentId } = hl;
+        const { value, type, commentIds, commentToDisplay } = hl;
         const concatCommentIds = [...(commentIds || []), comment.id];
         const e = s + value.length;
         const result: HightLight[] = [];
@@ -738,27 +737,30 @@ export async function computeComments(
 
         s = e;
         const final =  result.filter(r => r.value);
-        if (lastHighlightOfCommentId) {
-          final[final.length].lastHighlightOfCommentId = lastHighlightOfCommentId;
+        if (commentToDisplay) {
+          final[final.length].commentToDisplay = commentToDisplay;
         }
         return final;
       });
       return { ...change, hightLights };
     });
+    if (lastHighlight) {
+      lastHighlight.commentToDisplay = comment;
+    }
   }
-  context.commit('setChangesWithComments', changesWithComments);
+  context.commit('setActiveChanges', changesWithComments);
 }
 
 export async function openCommentInput(
   context: ActionContext<PR, StoreRoot>,
   selection: ChangeSelection,
 ) {
-  const { state: { selectedFile } } = context;
+  const { state: { selectedFile }, rootState: { info: { login, avatarUrl } } } = context;
   const newComment: ActiveComment = {
     id: -1,
     state: CommentState.Active,
-    login: '',
-    avatarUrl: '',
+    login,
+    avatarUrl,
     message: '',
     html: '',
     at: Date.now(),
@@ -778,6 +780,8 @@ export async function openCommentInput(
       },
     },
   };
+  await context.commit('openCommentInput', newComment);
+  await context.dispatch('computeComments');
 }
 
 const actions: ActionTree<PR, StoreRoot> = {
@@ -787,6 +791,7 @@ const actions: ActionTree<PR, StoreRoot> = {
   updateSelectedCommits,
   refreshTree,
   selectFile,
+  openCommentInput,
   computeComments,
 };
 

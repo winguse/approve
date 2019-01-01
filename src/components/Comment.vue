@@ -1,5 +1,5 @@
 <template>
-  <q-card class="comment" :style="{
+  <q-card class="comment-box" :style="{
     top: top + 'px',
     left: left + 'px',
   }">
@@ -42,8 +42,10 @@
 </template>
 
 <style lang="stylus">
-.comment {
+.comment-box {
   position: absolute;
+  background: white;
+  z-index: 99999;
 }
 </style>
 

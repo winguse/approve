@@ -257,6 +257,7 @@ export default class CommitSelector extends Vue {
       this.selection = undefined;
       // @ts-ignore
       this.addCommentIdx = -1;
+      // TODO remove if the box is opened
       return;
     }
     // @ts-ignore
@@ -265,7 +266,10 @@ export default class CommitSelector extends Vue {
   }
 
   get changes() {
-    return this.store.state.pullRequests.activeChanges;
+    // tslint:disable-next-line:no-console
+    console.log('get changes');
+    const { activeChanges } = this.store.state.pullRequests;
+    return activeChanges;
   }
 }
 </script>

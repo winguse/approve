@@ -11,6 +11,10 @@
     position: relative;
   }
 
+  .comment {
+    background: yellow;
+  }
+
   .str { color: #080 }  /* string content */
   .kwd { color: #008 }  /* a keyword */
   .com { color: #800 }  /* a comment */
@@ -55,7 +59,7 @@ export default class Decoration extends Vue {
   get hls() {
     // @ts-ignore
     const { hightLights }: { hightLights: HightLight[] } = this;
-    return hightLights.map(({ type, value, commentIds, lastHighlightOfCommentId }) => {
+    return hightLights.map(({ type, value, commentIds, commentToDisplay }) => {
       const result: DisplayHighlight = {
         value,
         css: {
@@ -68,13 +72,8 @@ export default class Decoration extends Vue {
           result.css[`comment-${commentId}`] = true;
         }
       }
-      if (lastHighlightOfCommentId) {
-        const comments = this.store.state.pullRequests.activeComments.filter(c => c.id === lastHighlightOfCommentId);
-        if (comments.length) {
-          result.comment = comments[0];
-        } else {
-          // log.error('');
-        }
+      if (commentToDisplay) {
+        result.comment = commentToDisplay;
       }
       return result;
     });

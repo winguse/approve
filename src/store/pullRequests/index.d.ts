@@ -145,7 +145,7 @@ export interface HightLight {
   value: string;
   commentIds?: number[];
   // this is the last highlight of the comment id
-  lastHighlightOfCommentId?: number;
+  commentToDisplay?: ActiveComment;
 }
 
 export interface ChangedLine {
@@ -194,8 +194,7 @@ export interface PR {
    * compute base on selected two commits, file
    */
   activeChanges: ChangedLine[];
-  changesWithComments?: ChangedLine[];
-  activeComments: ActiveComment[];
+  newComment?: ActiveComment;
 }
 
 export interface ChangeSelection {
