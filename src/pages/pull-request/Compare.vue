@@ -13,7 +13,6 @@
     /></td>
       <decoration
         :hightLights="change.hightLights"
-        :activeComments="activeComments"
       />
     </tr>
     </tbody>
@@ -88,21 +87,6 @@
     }
     .line-number:before {
       content: attr(data-txt);
-    }
-    .code {
-      white-space: pre;
-      .str { color: #080 }  /* string content */
-      .kwd { color: #008 }  /* a keyword */
-      .com { color: #800 }  /* a comment */
-      .typ { color: #606 }  /* a type name */
-      .lit { color: #066 }  /* a literal value */
-      /* punctuation, lisp open bracket, lisp close bracket */
-      .pun, .opn, .clo { color: #660 }
-      .tag { color: #008 }  /* a markup tag name */
-      .atn { color: #606 }  /* a markup attribute name */
-      .atv { color: #080 }  /* a markup attribute value */
-      .dec, .var { color: #606 }  /* a declaration; a variable name */
-      .fun { color: red }  /* a function name */
     }
   }
 }
@@ -278,10 +262,6 @@ export default class CommitSelector extends Vue {
 
   get changes() {
     return this.store.state.pullRequests.activeChanges;
-  }
-
-  get activeComments() {
-    return this.store.state.pullRequests.activeComments;
   }
 }
 </script>

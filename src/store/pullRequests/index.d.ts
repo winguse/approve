@@ -144,6 +144,8 @@ export interface HightLight {
   type: string;
   value: string;
   commentIds?: number[];
+  // this is the last highlight of the comment id
+  lastHighlightOfCommentId?: number;
 }
 
 export interface ChangedLine {

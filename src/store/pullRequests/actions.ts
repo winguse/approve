@@ -687,6 +687,7 @@ export async function computeComments(
       continue;
     }
     const { detailPos, useRight } = newPos;
+    let lastHighlight: HightLight | undefined;
     changesWithComments = changesWithComments.map(change => {
       const currentLine = useRight ? change.rightLineNumber : change.leftLineNumber;
       if (!currentLine) {
@@ -699,7 +700,7 @@ export async function computeComments(
       const endPos = currentLine === detailPos.end.line ? detailPos.end.position : Number.MAX_SAFE_INTEGER;
       let s = 0;
       const hightLights = change.hightLights.flatMap(hl => {
-        const { value, type, commentIds } = hl;
+        const { value, type, commentIds, lastHighlightOfCommentId } = hl;
         const concatCommentIds = [...(commentIds || []), comment.id];
         const e = s + value.length;
         const result: HightLight[] = [];
@@ -726,8 +727,14 @@ export async function computeComments(
           commentIds,
         });
 
+        lastHighlight = result[1]; // middle
+
         s = e;
-        return result.filter(r => r.value);
+        const final =  result.filter(r => r.value);
+        if (lastHighlightOfCommentId) {
+          final[final.length].lastHighlightOfCommentId = lastHighlightOfCommentId;
+        }
+        return final;
       });
       return { ...change, hightLights };
     });
