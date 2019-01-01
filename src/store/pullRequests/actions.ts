@@ -4,7 +4,7 @@ import { ActionContext, ActionTree } from 'vuex';
 import { codePrettify, sleep } from '../../utils';
 import { StoreRoot } from '../index.d';
 import { CommentState } from './enums';
-import { ChangedLine, Comment, Commit, CommitFile, HightLight, PR, Review, ReviewFile } from './index.d';
+import { ActiveComment, ChangedLine, Comment, Commit, CommitFile, HightLight, PR, Review, ReviewFile, DetailPosition } from './index.d';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_GRAPHQL_API_URL = GITHUB_API_BASE + '/graphql';
@@ -189,7 +189,7 @@ export async function load(
   const { owner, repo, pullId } = params;
   const query = getPullRequestInfoQuery(owner, repo, pullId);
   const { data: { repository: { pullRequest: {
-    baseRefName, baseRefOid: mergeBaseSha, headRefName, headRefOid, commits: { nodes: commits },
+    baseRefName, baseRefOid, headRefName, headRefOid, commits: { nodes: commits },
     reviews: { nodes: reviews },
   } } } } = await executeGraphQlQuery(query, token);
   const commitList: Commit[] = commits
@@ -208,9 +208,9 @@ export async function load(
   }, new Map<string, Commit>());
   let lastCommit: Commit = commitList[commitList.length - 1];
   while (true) {
-    lastCommit.mergeBaseSha = mergeBaseSha;
+    lastCommit.mergeBaseSha = baseRefOid;
     if (lastCommit.parents.length === 1) {
-      if (lastCommit.parents[0] === mergeBaseSha) {
+      if (lastCommit.parents[0] === baseRefOid) {
         log.debug('done as we reached mergeBaseSha', lastCommit);
         break;
       }
@@ -235,7 +235,7 @@ export async function load(
     owner,
     loading: false,
     mergeTo: {
-      sha: mergeBaseSha,
+      sha: baseRefOid,
       branch: baseRefName,
     },
     mergeFrom: {
@@ -280,7 +280,7 @@ export async function load(
     commits: commitsMap,
     commitShaList,
     selectedEndCommit: headRefOid,
-    selectedStartCommit: baseRefName,
+    selectedStartCommit: baseRefOid,
   };
   await context.commit('load', pr);
   await context.dispatch('loadCommitReviewFiles', headRefOid);
@@ -363,14 +363,14 @@ export async function updateSelectedCommits(
 
 export async function refreshTree(context: ActionContext<PR, StoreRoot>) {
   const { selectedStartCommit, selectedEndCommit, commits,
-    mergeTo: { branch } } = context.state;
+    mergeTo: { sha: mergeToSha } } = context.state;
   const endCommit = commits.get(selectedEndCommit);
   if (!endCommit) {
     log.error('cannot find end commit, it\'s not loaded.', selectedEndCommit);
     return;
   }
   const files = new Set<string>(endCommit.reviewFiles.keys());
-  if (selectedStartCommit !== branch) {
+  if (selectedStartCommit !== mergeToSha) {
     const startCommit = commits.get(selectedStartCommit);
     if (!startCommit) {
       log.error('cannot find start commit, it\'s not loaded.', selectedStartCommit);
@@ -550,8 +550,91 @@ export async function selectFile(
 export async function computeComments(
   context: ActionContext<PR, StoreRoot>,
 ) {
-  const { state: { selectedFile, activeChanges } } = context;
-  // TODO
+  const { state: { selectedFile, activeChanges, comments, selectedStartCommit, selectedEndCommit } } = context;
+  const commentOnCurrentFile = comments.filter(c => c.path === selectedFile);
+  const commentsMap = commentOnCurrentFile
+    .reduce((map, comment) => {
+      const activeComment: ActiveComment = {
+        ...comment,
+        replies: [],
+      };
+      map.set(comment.id, activeComment);
+      return map;
+    }, new Map<number, ActiveComment>());
+  commentOnCurrentFile
+    .sort((a, b) => a.at - b.at)
+    .forEach(comment => {
+      if (!comment.replyTo) {
+        return;
+      }
+      commentsMap.delete(comment.id);
+      const mainComment = commentsMap.get(comment.replyTo);
+      if (mainComment) {
+        mainComment.replies.push({
+          ...comment,
+        });
+      }
+    });
+  const activeComments = Array.from(commentsMap.values());
+  let changesWithComments = activeChanges;
+  for (const comment of activeComments) {
+    if (comment.sha === selectedEndCommit) {
+      const detailPos: DetailPosition = comment.detailPos || {
+        start: {
+          line: comment.line,
+          position: 0,
+        },
+        end: {
+          line: comment.line,
+          position: Number.MAX_SAFE_INTEGER,
+        },
+      };
+      changesWithComments = changesWithComments.map(change => {
+        const currentLine = change.rightLineNumber;
+        if (!currentLine) {
+          return change;
+        }
+        if (currentLine < detailPos.start.line || currentLine > detailPos.end.line) {
+          return change;
+        }
+        const startPos = currentLine === detailPos.start.line ? detailPos.start.position : 0;
+        const endPos = currentLine === detailPos.end.line ? detailPos.end.position : Number.MAX_SAFE_INTEGER;
+        let s = 0;
+        const hightLights = change.hightLights.flatMap(hl => {
+          const { value, type, commentIds } = hl;
+          const concatCommentIds = [...(commentIds || []), comment.id];
+          const e = s + value.length;
+          const result: HightLight[] = [];
+
+          const beginDt = startPos - s;
+          const endDt = e - endPos;
+
+          const sliceA = Math.min(0, beginDt);
+          const sliceB = value.length - Math.max(0, endDt);
+
+          result.push({
+            type,
+            value: value.slice(0, sliceA),
+            commentIds,
+          });
+          result.push({
+            type,
+            value: value.slice(sliceA, sliceB),
+            commentIds: concatCommentIds,
+          });
+          result.push({
+            type,
+            value: value.slice(sliceB),
+            commentIds,
+          });
+
+          s = e;
+          return result.filter(r => r.value);
+        });
+        return { ...change, hightLights };
+      });
+    }
+  }
 }
 
 const actions: ActionTree<PR, StoreRoot> = {

@@ -142,6 +142,7 @@ export interface Commit {
 export interface HightLight {
   type: string;
   value: string;
+  commentIds?: number[];
 }
 
 export interface ChangedLine {
