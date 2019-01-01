@@ -224,6 +224,8 @@ export default class CommitSelector extends Vue {
     return store;
   }
 
+  private selection: ChangeSelection | undefined;
+
   public data() {
     return {
       addCommentIdx: -1,
@@ -246,18 +248,20 @@ export default class CommitSelector extends Vue {
   }
 
   public openCommentInput() {
-    //
+    this.store.dispatch('pullRequests/openCommentInput', this.selection);
   }
 
   public checkSelection(event: Event) {
     const selection = calculateSelection(this.store.state.pullRequests);
     if (!selection) {
+      this.selection = undefined;
       // @ts-ignore
       this.addCommentIdx = -1;
       return;
     }
     // @ts-ignore
     this.addCommentIdx = selection.endIdx;
+    this.selection = selection;
   }
 
   get changes() {

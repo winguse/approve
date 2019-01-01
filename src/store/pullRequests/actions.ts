@@ -4,8 +4,8 @@ import { ActionContext, ActionTree } from 'vuex';
 import { codePrettify, sleep } from '../../utils';
 import { StoreRoot } from '../index.d';
 import { CommentState } from './enums';
-import { ActiveComment, ChangedLine, Comment, Commit, CommitFile, DetailPosition,
-  DiffResult, HightLight, PR, Review, ReviewFile } from './index.d';
+import { ActiveComment, ChangedLine, ChangeSelection, Comment, Commit, CommitFile,
+  DetailPosition, DiffResult, HightLight, PR, Review, ReviewFile } from './index.d';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_GRAPHQL_API_URL = GITHUB_API_BASE + '/graphql';
@@ -740,6 +740,37 @@ export async function computeComments(
     });
   }
   context.commit('setChangesWithComments', changesWithComments);
+}
+
+export async function openCommentInput(
+  context: ActionContext<PR, StoreRoot>,
+  selection: ChangeSelection,
+) {
+  const { state: { selectedFile } } = context;
+  const newComment: ActiveComment = {
+    id: -1,
+    state: CommentState.Active,
+    login: '',
+    avatarUrl: '',
+    message: '',
+    html: '',
+    at: Date.now(),
+    replies: [],
+    path: selectedFile,
+    sha: selection.sha,
+    githubPosition: 0,
+    line: selection.endLine,
+    detailPos: {
+      start: {
+        line: selection.startLine,
+        position: selection.startOffset,
+      },
+      end: {
+        line: selection.endLine,
+        position: selection.endOffset,
+      },
+    },
+  };
 }
 
 const actions: ActionTree<PR, StoreRoot> = {
