@@ -1,4 +1,5 @@
 import { CommentState, ReviewState } from './enums';
+import * as diff from 'diff';
 
 export interface FileItem {
   name: string;
@@ -41,6 +42,28 @@ export interface Comment extends UserInfo {
   at: number;
   id: number;
   replyTo?: number;
+  path: string;
+  sha: string;
+  // github native comment position is base on diff from: compare/<merge_target_branch>...<commit_sha>
+  githubPosition: number;
+  line: number;
+  detailPos?: DetailPosition;
+}
+
+export interface ActiveCommentReply extends UserInfo {
+  message: string;
+  html: string;
+  at: number;
+  id: number;
+}
+
+export interface ActiveComment extends UserInfo {
+  state: CommentState;
+  message: string;
+  html: string;
+  at: number;
+  id: number;
+  replies: ActiveCommentReply[];
   path: string;
   sha: string;
   // github native comment position is base on diff from: compare/<merge_target_branch>...<commit_sha>
@@ -120,6 +143,9 @@ export interface Commit {
 export interface HightLight {
   type: string;
   value: string;
+  commentIds?: number[];
+  // this is the last highlight of the comment id
+  commentToDisplay?: ActiveComment;
 }
 
 export interface ChangedLine {
@@ -168,5 +194,20 @@ export interface PR {
    * compute base on selected two commits, file
    */
   activeChanges: ChangedLine[];
+  newComment?: ActiveComment;
 }
 
+export interface ChangeSelection {
+  sha: string;
+  startLine: number;
+  startOffset: number;
+  endLine: number;
+  endOffset: number;
+  startIdx: number;
+  endIdx: number;
+}
+
+export interface DiffResult extends diff.IDiffResult {
+  leftLineNumber?: number;
+  rightLineNumber?: number;
+}

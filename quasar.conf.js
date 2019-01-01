@@ -62,6 +62,11 @@ module.exports = function config(ctx) {
     // framework: 'all' --- includes everything; for dev only!
     framework: {
       components: [
+        'QSelect',
+        'QCard',
+        'QCardMain',
+        'QCardSeparator',
+        'QCardActions',
         'QTree',
         'QRange',
         'QModal',

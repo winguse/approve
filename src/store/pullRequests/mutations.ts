@@ -1,5 +1,5 @@
 import log from 'js-logger';
-import { ChangedLine, PR, ReviewFile, TreeDirectory, TreeItem } from './index.d';
+import { ActiveComment, ChangedLine, PR, ReviewFile, TreeDirectory, TreeItem } from './index.d';
 import { emptyState } from './state';
 
 export function clear(state: PR) {
@@ -123,12 +123,18 @@ export function refreshTree(state: PR, files: string[]) {
   state.tree = root;
 }
 
-export function selectFile(state: PR, { selectedFile, activeChanges }:
-  {selectedFile: string, activeChanges: ChangedLine[]}) {
+export function selectFile(state: PR, selectedFile: string) {
   state.selectedFile = selectedFile;
+}
+
+export function setActiveChanges(state: PR, activeChanges: ChangedLine[]) {
   state.activeChanges = activeChanges;
 }
 
 export function setExpendedDir(state: PR, expendedDir: string[]) {
   state.expendedDir = expendedDir;
+}
+
+export function openCommentInput(state: PR, newComment: ActiveComment) {
+  state.newComment = newComment;
 }
