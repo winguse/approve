@@ -590,7 +590,7 @@ export async function convertPosition(
 
 export async function computeComments(context: ActionContext<PR, StoreRoot>) {
   // tslint:disable-next-line:no-console
-  console.log('compute');
+  // console.log('compute');
   const {
     state: { comments, selectedStartCommit, selectedEndCommit, owner, mergeTo: { branch }, commits
     , repo, newComment, selectedFile },
@@ -712,10 +712,10 @@ export async function computeComments(context: ActionContext<PR, StoreRoot>) {
         const result: HightLight[] = [];
 
         const beginDt = startPos - s;
-        const endDt = endPos - e;
+        const endDt = e - endPos;
 
-        const sliceA = Math.min(0, beginDt);
-        const sliceB = value.length - Math.min(0, endDt);
+        const sliceA = Math.max(0, Math.min(value.length, beginDt));
+        const sliceB = Math.max(0, Math.min(value.length, value.length - endDt));
 
         result.push({
           type,
@@ -733,7 +733,9 @@ export async function computeComments(context: ActionContext<PR, StoreRoot>) {
           commentIds,
         });
 
-        lastHighlight = result[1]; // middle
+        if (result[1].value) {
+          lastHighlight = result[1]; // middle
+        }
 
         s = e;
         const final =  result.filter(r => r.value);

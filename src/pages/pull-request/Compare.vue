@@ -24,6 +24,7 @@
 .diff-table-wrapper {
   position: relative;
   .add-comment-button {
+    z-index: 99999;
     position: absolute;
     font-size: 18px;
     top: 0px;
@@ -31,6 +32,9 @@
     cursor: pointer;
     &:HOVER {
       opacity: 0.9;
+      zoom: 1.5;
+      top: -5px;
+      left: -5px;
     }
   }
 }
@@ -123,7 +127,7 @@ function getPreviousLength(node: Node | null): number {
     return 0;
   }
   if (node.nodeType === Node.TEXT_NODE) {
-    node = node.parentElement; // span
+    node = node.parentElement && node.parentElement.previousSibling; // span's older brother
     let l = 0;
     while (node) {
       l += (node.textContent || '').length;
@@ -249,6 +253,7 @@ export default class CommitSelector extends Vue {
 
   public openCommentInput() {
     this.store.dispatch('pullRequests/openCommentInput', this.selection);
+    getSelection().removeAllRanges();
   }
 
   public checkSelection(event: Event) {
@@ -267,7 +272,7 @@ export default class CommitSelector extends Vue {
 
   get changes() {
     // tslint:disable-next-line:no-console
-    console.log('get changes');
+    // console.log('get changes');
     const { activeChanges } = this.store.state.pullRequests;
     return activeChanges;
   }
