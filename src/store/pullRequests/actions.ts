@@ -4,7 +4,8 @@ import { ActionContext, ActionTree } from 'vuex';
 import { codePrettify, sleep } from '../../utils';
 import { StoreRoot } from '../index.d';
 import { CommentState } from './enums';
-import { ActiveComment, ChangedLine, Comment, Commit, CommitFile, HightLight, PR, Review, ReviewFile, DetailPosition } from './index.d';
+import { ActiveComment, ChangedLine, Comment, Commit, CommitFile, DetailPosition,
+  DiffResult, HightLight, PR, Review, ReviewFile } from './index.d';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_GRAPHQL_API_URL = GITHUB_API_BASE + '/graphql';
@@ -173,6 +174,17 @@ export async function getFileContent(
   // TODO clear old cache
   localStorage.setItem(url, `${Date.now()}|${body}`);
   return JSON.parse(body);
+}
+
+export async function getFileContentString(
+  token: string,
+  owner: string,
+  repo: string,
+  fullPath: string,
+  ref: string,
+): Promise<string> {
+  const { content } = await getFileContent(token, owner, repo, fullPath, ref);
+  return decodeURIComponent(escape(atob(content || '')));
 }
 
 function toTimestamp(dateStr: string) {
@@ -425,11 +437,11 @@ function runPretty(spans: Array<number | string>, spanIdx: number, line: string,
   return { spanIdx, hightLights};
 }
 
-function refineDiffResult(diffResult: diff.IDiffResult[], added: boolean | undefined, removed: boolean | undefined) {
-  const tmp: diff.IDiffResult[] = [];
+function refineDiffResult(diffResult: DiffResult[], added: boolean | undefined, removed: boolean | undefined) {
+  const tmp: DiffResult[] = [];
   while (diffResult.length > 0) {
     // @ts-ignore
-    const last: diff.IDiffResult = diffResult.pop();
+    const last: DiffResult = diffResult.pop();
     if (last.added === added && last.removed === removed) {
       diffResult.push(last);
       if (last.value.endsWith('\n')) {
@@ -437,6 +449,8 @@ function refineDiffResult(diffResult: diff.IDiffResult[], added: boolean | undef
           value: '',
           added,
           removed,
+          leftLineNumber: last.leftLineNumber && last.leftLineNumber + 1,
+          rightLineNumber: last.rightLineNumber && last.rightLineNumber + 1,
         });
       }
       break;
@@ -444,6 +458,36 @@ function refineDiffResult(diffResult: diff.IDiffResult[], added: boolean | undef
     tmp.unshift(last);
   }
   tmp.forEach(t => diffResult.push(t));
+}
+
+function diffLines(left: string, right: string): DiffResult[] {
+  let leftLineNumber = 0;
+  let rightLineNumber = 0;
+  return diff.diffLines(left, right)
+  .flatMap(({value, added, removed}) => {
+    let startPos = 0;
+    const result: DiffResult[] = [];
+    while (startPos < value.length) {
+      let endPos = value.indexOf('\n', startPos) + 1;
+      if (endPos === 0) {
+        endPos = value.length;
+      }
+      const d: DiffResult = {
+        value: value.slice(startPos, endPos),
+        added,
+        removed,
+      };
+      if (!added) {
+        d.leftLineNumber = ++leftLineNumber;
+      }
+      if (!removed) {
+        d.rightLineNumber = ++rightLineNumber;
+      }
+      result.push(d);
+      startPos = endPos;
+    }
+    return result;
+  });
 }
 
 export async function selectFile(
@@ -463,35 +507,15 @@ export async function selectFile(
     leftRef = endCommit.mergeBaseSha;
   }
   const rightRef = selectedEndCommit;
-  const leftRequest = getFileContent(token, owner, repo, fullPath, leftRef);
-  let { content: right } = await getFileContent(token, owner, repo, fullPath, rightRef);
-  let { content: left } = await leftRequest;
-  left = left ? atob(left) : '';
-  right = right ? atob(right) : '';
+  const leftRequest = getFileContentString(token, owner, repo, fullPath, leftRef);
+  const right = await getFileContentString(token, owner, repo, fullPath, rightRef);
+  const left = await leftRequest;
   const extension = fullPath.split('.').pop();
   const safeEndingSpan = [Number.MAX_SAFE_INTEGER, ''];
   const leftSpans = codePrettify(left, extension).concat(safeEndingSpan);
   const rightSpans = codePrettify(right, extension).concat(safeEndingSpan);
 
-  const diffResult =
-    diff.diffLines(left, right)
-      .flatMap(({value, added, removed}) => {
-        let startPos = 0;
-        const result: diff.IDiffResult[] = [];
-        while (startPos < value.length) {
-          let endPos = value.indexOf('\n', startPos) + 1;
-          if (endPos === 0) {
-            endPos = value.length;
-          }
-          result.push({
-            value: value.slice(startPos, endPos),
-            added,
-            removed,
-          });
-          startPos = endPos;
-        }
-        return result;
-      });
+  const diffResult = diffLines(left, right);
 
   // refine the line ending diff
   if (diffResult.length) {
@@ -500,29 +524,25 @@ export async function selectFile(
     refineDiffResult(diffResult, removed, added);
   }
 
-  let leftLineNumber = 0;
-  let rightLineNumber = 0;
   let leftPos = 0;
   let rightPos = 0;
   let leftSpanIdx = 0;
   let rightSpanIdx = 0;
   const activeChanges =
     diffResult
-    .map(({value, added, removed}, idx) => {
+    .map(({value, added, removed, leftLineNumber, rightLineNumber}, idx) => {
       let pickedHightLights: HightLight[] = [];
       if (!added) {
         const { spanIdx, hightLights } = runPretty(leftSpans, leftSpanIdx, value, leftPos);
         leftPos += value.length;
         leftSpanIdx = spanIdx;
         pickedHightLights = hightLights;
-        leftLineNumber++;
       }
       if (!removed) {
         const { spanIdx, hightLights } = runPretty(rightSpans, rightSpanIdx, value, rightPos);
         rightPos += value.length;
         rightSpanIdx = spanIdx;
         pickedHightLights = hightLights;
-        rightLineNumber++;
       }
       const result: ChangedLine = {
         idx,
@@ -530,27 +550,107 @@ export async function selectFile(
         added: !!added,
         removed: !!removed,
       };
-      if (added) {
-        result.hightLights = pickedHightLights;
-        result.rightLineNumber = rightLineNumber;
-      } else if (removed) {
-        result.hightLights = pickedHightLights;
-        result.leftLineNumber = leftLineNumber;
-      } else {
-        result.hightLights = pickedHightLights;
-        result.leftLineNumber = leftLineNumber;
-        result.rightLineNumber = rightLineNumber;
-      }
+      result.hightLights = pickedHightLights;
+      result.leftLineNumber = leftLineNumber;
+      result.rightLineNumber = rightLineNumber;
       return result;
     });
 
   await context.commit('selectFile', { selectedFile: fullPath, activeChanges });
 }
 
+function convertPositionFromSourceFile(source: string, target: string, sourcePos: DetailPosition):
+  DetailPosition | undefined {
+  let startLine: number | undefined;
+  let startPos: number | undefined;
+  let endLine: number | undefined;
+  let endPos: number | undefined;
+
+  const sr = diffLines(source, target);
+  for (const d of sr) {
+    if (d.added || d.removed) {
+      continue;
+    }
+    if (!d.leftLineNumber || !d.rightLineNumber) {
+      continue;
+    }
+    if (sourcePos.start.line <= d.leftLineNumber && d.leftLineNumber <= sourcePos.end.line) {
+      if (!startLine) {
+        startLine = d.rightLineNumber;
+      }
+      if (!endLine || endLine < d.rightLineNumber) {
+        endLine = d.rightLineNumber;
+      }
+    }
+    if (d.leftLineNumber === sourcePos.start.line) {
+      startLine = d.rightLineNumber;
+      startPos = sourcePos.start.position;
+    }
+    if (d.leftLineNumber === sourcePos.end.line) {
+      endLine = d.rightLineNumber;
+      endPos = sourcePos.end.position;
+    }
+  }
+  if (!startLine || !endLine) {
+    return undefined;
+  }
+  return {
+    start: {
+      line: startLine,
+      position: startPos || 0,
+    },
+    end: {
+      line: endLine,
+      position: endPos || 0,
+    },
+  };
+}
+
+export async function convertPosition(
+    comment: ActiveComment, leftSha: string, rightSha: string, token: string, owner: string, repo: string,
+  ): Promise<{ detailPos: DetailPosition, useRight: boolean } | undefined> {
+  const detailPos: DetailPosition = comment.detailPos || {
+    start: {
+      line: comment.line,
+      position: 0,
+    },
+    end: {
+      line: comment.line,
+      position: Number.MAX_SAFE_INTEGER,
+    },
+  };
+  if (comment.sha === leftSha) {
+    return { detailPos, useRight: false };
+  }
+  if (comment.sha === rightSha) {
+    return { detailPos, useRight: true };
+  }
+
+  const source = await getFileContentString(token, owner, repo, comment.path, comment.sha);
+  const right = await getFileContentString(token, owner, repo, comment.path, rightSha);
+
+  const toRight = convertPositionFromSourceFile(source, right, detailPos);
+  if (toRight) {
+    return { detailPos: toRight, useRight: true };
+  }
+
+  const left = await getFileContentString(token, owner, repo, comment.path, leftSha);
+  const toLeft = convertPositionFromSourceFile(source, left, detailPos);
+  if (toLeft) {
+    return { detailPos: toLeft, useRight: false };
+  }
+
+  return undefined;
+}
+
 export async function computeComments(
   context: ActionContext<PR, StoreRoot>,
 ) {
-  const { state: { selectedFile, activeChanges, comments, selectedStartCommit, selectedEndCommit } } = context;
+  const {
+    state: { selectedFile, activeChanges, comments, selectedStartCommit, selectedEndCommit, owner
+    , repo },
+    rootState: { config: { token } },
+  } = context;
   const commentOnCurrentFile = comments.filter(c => c.path === selectedFile);
   const commentsMap = commentOnCurrentFile
     .reduce((map, comment) => {
@@ -578,62 +678,58 @@ export async function computeComments(
   const activeComments = Array.from(commentsMap.values());
   let changesWithComments = activeChanges;
   for (const comment of activeComments) {
-    if (comment.sha === selectedEndCommit) {
-      const detailPos: DetailPosition = comment.detailPos || {
-        start: {
-          line: comment.line,
-          position: 0,
-        },
-        end: {
-          line: comment.line,
-          position: Number.MAX_SAFE_INTEGER,
-        },
-      };
-      changesWithComments = changesWithComments.map(change => {
-        const currentLine = change.rightLineNumber;
-        if (!currentLine) {
-          return change;
-        }
-        if (currentLine < detailPos.start.line || currentLine > detailPos.end.line) {
-          return change;
-        }
-        const startPos = currentLine === detailPos.start.line ? detailPos.start.position : 0;
-        const endPos = currentLine === detailPos.end.line ? detailPos.end.position : Number.MAX_SAFE_INTEGER;
-        let s = 0;
-        const hightLights = change.hightLights.flatMap(hl => {
-          const { value, type, commentIds } = hl;
-          const concatCommentIds = [...(commentIds || []), comment.id];
-          const e = s + value.length;
-          const result: HightLight[] = [];
-
-          const beginDt = startPos - s;
-          const endDt = e - endPos;
-
-          const sliceA = Math.min(0, beginDt);
-          const sliceB = value.length - Math.max(0, endDt);
-
-          result.push({
-            type,
-            value: value.slice(0, sliceA),
-            commentIds,
-          });
-          result.push({
-            type,
-            value: value.slice(sliceA, sliceB),
-            commentIds: concatCommentIds,
-          });
-          result.push({
-            type,
-            value: value.slice(sliceB),
-            commentIds,
-          });
-
-          s = e;
-          return result.filter(r => r.value);
-        });
-        return { ...change, hightLights };
-      });
+    const newPos = await convertPosition(
+      comment, selectedStartCommit, selectedEndCommit, token, owner, repo,
+    );
+    if (!newPos) {
+      // this comment is missed due to source update
+      continue;
     }
+    const { detailPos, useRight } = newPos;
+    changesWithComments = changesWithComments.map(change => {
+      const currentLine = useRight ? change.rightLineNumber : change.leftLineNumber;
+      if (!currentLine) {
+        return change;
+      }
+      if (currentLine < detailPos.start.line || currentLine > detailPos.end.line) {
+        return change;
+      }
+      const startPos = currentLine === detailPos.start.line ? detailPos.start.position : 0;
+      const endPos = currentLine === detailPos.end.line ? detailPos.end.position : Number.MAX_SAFE_INTEGER;
+      let s = 0;
+      const hightLights = change.hightLights.flatMap(hl => {
+        const { value, type, commentIds } = hl;
+        const concatCommentIds = [...(commentIds || []), comment.id];
+        const e = s + value.length;
+        const result: HightLight[] = [];
+
+        const beginDt = startPos - s;
+        const endDt = endPos - e;
+
+        const sliceA = Math.min(0, beginDt);
+        const sliceB = value.length - Math.min(0, endDt);
+
+        result.push({
+          type,
+          value: value.slice(0, sliceA),
+          commentIds,
+        });
+        result.push({
+          type,
+          value: value.slice(sliceA, sliceB),
+          commentIds: concatCommentIds,
+        });
+        result.push({
+          type,
+          value: value.slice(sliceB),
+          commentIds,
+        });
+
+        s = e;
+        return result.filter(r => r.value);
+      });
+      return { ...change, hightLights };
+    });
   }
 }
 

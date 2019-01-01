@@ -1,4 +1,5 @@
 import { CommentState, ReviewState } from './enums';
+import * as diff from 'diff';
 
 export interface FileItem {
   name: string;
@@ -202,4 +203,9 @@ export interface ChangeSelection {
   endOffset: number;
   startIdx: number;
   endIdx: number;
+}
+
+export interface DiffResult extends diff.IDiffResult {
+  leftLineNumber?: number;
+  rightLineNumber?: number;
 }
