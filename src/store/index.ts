@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 
 import config from './config';
+import info from './info';
 import pullRequests from './pullRequests';
 
 Vue.use(Vuex);
@@ -17,6 +18,7 @@ export default function(/* { ssrContext } */) {
     modules: {
       config,
       pullRequests,
+      info,
     },
   });
 

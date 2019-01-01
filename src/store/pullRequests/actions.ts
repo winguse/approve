@@ -43,6 +43,10 @@ fragment pageInfoFg on PageInfo {
 }
 
 query getPullRequestInfo {
+  viewer {
+    avatarUrl
+    login
+  }
   repository(name: "${repo}", owner: "${owner}") {
     pullRequest(number: ${pullId}) {
       baseRefName
@@ -203,7 +207,10 @@ export async function load(
   const { data: { repository: { pullRequest: {
     baseRefName, baseRefOid, headRefName, headRefOid, commits: { nodes: commits },
     reviews: { nodes: reviews },
-  } } } } = await executeGraphQlQuery(query, token);
+  } },
+    viewer: currentUser,
+  } } = await executeGraphQlQuery(query, token);
+  await context.commit('info/set', currentUser, { root: true });
   const commitList: Commit[] = commits
     .map(({ commit: { additions, deletions, oid: sha, committedDate, messageHeadline,
       messageBody, message, parents: { nodes: parentCommits } } }: any) => {
