@@ -557,6 +557,7 @@ export async function selectFile(
     });
 
   await context.commit('selectFile', { selectedFile: fullPath, activeChanges });
+  context.dispatch('computeComments');
 }
 
 function convertPositionFromSourceFile(source: string, target: string, sourcePos: DetailPosition):
@@ -731,6 +732,7 @@ export async function computeComments(
       return { ...change, hightLights };
     });
   }
+  context.commit('setChangesWithComments', changesWithComments);
 }
 
 const actions: ActionTree<PR, StoreRoot> = {
@@ -740,6 +742,7 @@ const actions: ActionTree<PR, StoreRoot> = {
   updateSelectedCommits,
   refreshTree,
   selectFile,
+  computeComments,
 };
 
 export default actions;

@@ -127,8 +127,13 @@ export function selectFile(state: PR, { selectedFile, activeChanges }:
   {selectedFile: string, activeChanges: ChangedLine[]}) {
   state.selectedFile = selectedFile;
   state.activeChanges = activeChanges;
+  state.changesWithComments = undefined;
 }
 
 export function setExpendedDir(state: PR, expendedDir: string[]) {
   state.expendedDir = expendedDir;
+}
+
+export function setChangesWithComments(state: PR, changesWithComments: ChangedLine[]) {
+  state.changesWithComments = changesWithComments;
 }

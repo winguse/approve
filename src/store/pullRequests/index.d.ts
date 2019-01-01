@@ -192,6 +192,7 @@ export interface PR {
    * compute base on selected two commits, file
    */
   activeChanges: ChangedLine[];
+  changesWithComments?: ChangedLine[];
   activeComments: ActiveComment[];
 }
 
