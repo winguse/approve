@@ -1,10 +1,11 @@
 <template>
-  <q-modal v-model="opened" content-css="padding: 1em">
+  <q-modal v-model="opened" content-css="padding: 1em" no-backdrop-dismiss no-esc-dismiss no-route-dismiss>
     <h6>Configurations</h6>
+    <p>Generate your Github token <a href="https://github.com/settings/tokens/new?scopes=repo&amp;description=Approve-PR-Too" target="_blank">here</a>.</p>
     <p><q-input float-label="Token" v-model="token" /></p>
     <p>
-      <q-btn color="primary" @click="opened = false" label="OK" />
-      <q-btn label="Clear" @click="clear" />
+      <q-btn color="primary" @click="opened = false" label="OK" :disable="!token" />
+      <!-- <q-btn label="Clear" @click="clear" /> -->
     </p>
   </q-modal>
 </template>
