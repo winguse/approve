@@ -759,7 +759,7 @@ export async function openCommentInput(
 ) {
   const { state: { selectedFile }, rootState: { info: { login, avatarUrl } } } = context;
   const newComment: ActiveComment = {
-    id: -1,
+    id: 0,
     state: CommentState.Active,
     login,
     avatarUrl,
@@ -786,6 +786,13 @@ export async function openCommentInput(
   await context.dispatch('computeComments');
 }
 
+export async function cancelNewComment(
+  context: ActionContext<PR, StoreRoot>,
+) {
+  await context.commit('cancelNewComment');
+  await context.dispatch('computeComments');
+}
+
 const actions: ActionTree<PR, StoreRoot> = {
   clear,
   load,
@@ -795,6 +802,7 @@ const actions: ActionTree<PR, StoreRoot> = {
   selectFile,
   openCommentInput,
   computeComments,
+  cancelNewComment,
 };
 
 export default actions;

@@ -25,18 +25,24 @@
             <q-input
               v-model="newCommentMessage"
               type="textarea"
-              float-label="Comment"
+              placeholder="Comment"
+              hide-underline
+              autofocus
             />
           </q-item-main>
         </q-item>
       </q-list>
     </q-card-main>
     <q-card-separator />
-    <q-card-actions>
+    <q-card-actions align="end">
       <q-select
+        v-if="c.id > 0"
         v-model="commentState"
         :options="commentStateOptions"
+        hide-underline
       />
+      <q-btn v-if="c.id === 0" color="primary" label="Submit" @click="submitNewComment"/>
+      <q-btn v-if="c.id === 0" label="Cancle" @click="cancelNewComment"/>
     </q-card-actions>
   </q-card>
 </template>
@@ -45,13 +51,14 @@
 .comment-box {
   position: absolute;
   background: white;
-  z-index: 99999;
+  z-index: 1000;
 }
 </style>
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { Store } from 'vuex';
+import { StoreRoot } from '../store/index.d';
 import { CommentState } from '../store/pullRequests/enums';
 import { ActiveComment } from '../store/pullRequests/index.d';
 
@@ -61,6 +68,11 @@ import { ActiveComment } from '../store/pullRequests/index.d';
   },
 })
 export default class Comment extends Vue {
+
+  private get store() {
+    const store: Store<StoreRoot> = this.$store;
+    return store;
+  }
 
   get cmt(): ActiveComment {
     // @ts-ignore
@@ -96,6 +108,14 @@ export default class Comment extends Vue {
   }
 
   set commentState(v) {
+    // TODO
+  }
+
+  public cancelNewComment() {
+    this.store.dispatch('pullRequests/cancelNewComment');
+  }
+
+  public submitNewComment() {
     // TODO
   }
 }

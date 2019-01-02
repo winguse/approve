@@ -138,3 +138,7 @@ export function setExpendedDir(state: PR, expendedDir: string[]) {
 export function openCommentInput(state: PR, newComment: ActiveComment) {
   state.newComment = newComment;
 }
+
+export function cancelNewComment(state: PR) {
+  state.newComment = undefined;
+}
