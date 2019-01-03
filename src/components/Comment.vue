@@ -100,8 +100,8 @@ export default class Comment extends Vue {
 
   public data() {
     return {
-      top: 100,
-      left: -150,
+      top: 30,
+      left: -50,
       newCommentMessage: '',
       commentStateOptions: [{
         label: 'Active',
@@ -151,7 +151,9 @@ export default class Comment extends Vue {
   }
 
   public submitNewComment() {
-    // TODO
+    // @ts-ignore
+    const { top, left, newCommentMessage }: { top: number, left: number, newCommentMessage: string } = this;
+    this.store.dispatch('pullRequests/submitNewComment', { top, left, newCommentMessage });
   }
 
   public mousedown(e: MouseEvent) {
