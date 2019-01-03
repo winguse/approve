@@ -5,7 +5,7 @@ import { codePrettify, sleep } from '../../utils';
 import { StoreRoot } from '../index.d';
 import { CommentState } from './enums';
 import { ActiveComment, ChangedLine, ChangeSelection, Comment, Commit, CommitFile,
-  DetailPosition, DiffResult, HightLight, PR, Review, ReviewFile } from './index.d';
+  DetailPosition, DiffResult, ExtendedComment, HightLight, PR, Review, ReviewFile } from './index.d';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_GRAPHQL_API_URL = GITHUB_API_BASE + '/graphql';
@@ -14,10 +14,7 @@ export async function clear(context: ActionContext<PR, StoreRoot>) { // TODO roo
   await context.commit('clear');
 }
 
-function getPullRequestInfoQuery(owner: string, repo: string, pullId: string) {
-  return `
-fragment commentsFg on PullRequestReviewCommentConnection {
-  nodes {
+const commentFields = `
     databaseId
     path
     body
@@ -30,6 +27,13 @@ fragment commentsFg on PullRequestReviewCommentConnection {
     replyTo {
       databaseId
     }
+`;
+
+function getPullRequestInfoQuery(owner: string, repo: string, pullId: string) {
+  return `
+fragment commentsFg on PullRequestReviewCommentConnection {
+  nodes {
+    ${commentFields}
   }
   pageInfo {
     hasNextPage
@@ -105,17 +109,19 @@ query getPullRequestInfo {
 }`;
 }
 
-async function executeGraphQlQuery(query: string, token: string) {
+async function executeGraphQlQuery(query: string, token: string, cacheResult: boolean = true) {
   if (!token) {
     throw new Error('Github toke is needed');
   }
   const key = `${GITHUB_GRAPHQL_API_URL}|${query}`;
-  const cached = localStorage.getItem(key);
-  if (cached) {
-    const timePos = cached.indexOf('|');
-    const cachedAge = Date.now() - parseInt(cached.slice(0, timePos), 10);
-    if (cachedAge < 3600 * 1000) {
-      return JSON.parse(cached.slice(timePos + 1));
+  if (cacheResult) {
+    const cached = localStorage.getItem(key);
+    if (cached) {
+      const timePos = cached.indexOf('|');
+      const cachedAge = Date.now() - parseInt(cached.slice(0, timePos), 10);
+      if (cachedAge < 3600 * 1000) {
+        return JSON.parse(cached.slice(timePos + 1));
+      }
     }
   }
   const response = await fetch(GITHUB_GRAPHQL_API_URL, {
@@ -127,8 +133,10 @@ async function executeGraphQlQuery(query: string, token: string) {
     body: JSON.stringify({ query }),
   });
   const body = await response.text();
-  // TODO clear old cache
-  localStorage.setItem(key, `${Date.now()}|${body}`);
+  if (cacheResult) {
+    // TODO clear old cache
+    localStorage.setItem(key, `${Date.now()}|${body}`);
+  }
   return JSON.parse(body);
 }
 
@@ -247,6 +255,7 @@ export async function load(
   }
   const commitShaList = commitList.map((commit: Commit) => commit.sha);
   const pr: PR = {
+    id: +pullId,
     selectedFile: '',
     expendedDir: [],
     repo,
@@ -269,9 +278,11 @@ export async function load(
           databaseId: id, replyTo, position: githubPosition, path,
         }: any) => {
           const [, message, , json] = rawMessage.match(commentMessageReg);
-          const fragment = {
+          const fragment: ExtendedComment = {
             line: 0,
             state: CommentState.Active,
+            detailPos: undefined,
+            boxPos: undefined,
           };
           if (json) {
             Object.assign(fragment, JSON.parse(json));
@@ -793,6 +804,59 @@ export async function cancelNewComment(
   await context.dispatch('computeComments');
 }
 
+async function submitComment(
+  token: string, owner: string, repo: string, prId: number, sha: string, path: string, position: number, body: string,
+) {
+  if (!token) {
+    throw new Error('Github toke is needed');
+  }
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${prId}/comments`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `token ${token}`,
+    },
+    body: JSON.stringify({
+      body,
+      commit_id: sha,
+      path,
+      position,
+    }),
+  });
+  return await response.json();
+}
+
+export async function submitNewComment(
+  context: ActionContext<PR, StoreRoot>,
+  { top, left, newCommentMessage }: { top: number, left: number, newCommentMessage: string },
+) {
+  const { newComment, selectedFile, id, owner, repo } = context.state;
+  const { rootState: { config: { token } } } = context;
+  if (!newComment || !newComment.detailPos) {
+    // TODO something wrong
+    return;
+  }
+  const { detailPos, sha } = newComment; // TODO: BUG: Github doesn't allow create comment on master sha
+  // TODO compute detailPos to githubPosition
+  const githubPosition = 1;
+  const fragment: ExtendedComment = {
+    state: CommentState.Active,
+    line: detailPos.start.line,
+    detailPos,
+    boxPos: { top, left },
+  };
+  const body = `${newCommentMessage}<!--${JSON.stringify(fragment)}-->`;
+  // TODO the new comment is returned here, but without rendered html field
+  // i am not using that right now, but doing a hard reload is good way to maintain consistence
+  await submitComment(token, owner, repo, id, sha, selectedFile, githubPosition, body);
+}
+
+export async function reloadAllComments(
+  context: ActionContext<PR, StoreRoot>,
+) {
+  // TODO
+}
+
 const actions: ActionTree<PR, StoreRoot> = {
   clear,
   load,
@@ -803,6 +867,8 @@ const actions: ActionTree<PR, StoreRoot> = {
   openCommentInput,
   computeComments,
   cancelNewComment,
+  submitNewComment,
+  reloadAllComments,
 };
 
 export default actions;

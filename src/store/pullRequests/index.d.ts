@@ -35,19 +35,24 @@ export interface UserInfo {
   avatarUrl: string;
 }
 
-export interface Comment extends UserInfo {
+export interface ExtendedComment {
   state: CommentState;
+  line: number;
+  detailPos?: DetailPosition;
+  boxPos?: {top: number, left: number}
+}
+
+
+export interface Comment extends UserInfo, ExtendedComment  {
   message: string;
   html: string;
   at: number;
   id: number;
-  replyTo?: number;
   path: string;
   sha: string;
   // github native comment position is base on diff from: compare/<merge_target_branch>...<commit_sha>
   githubPosition: number;
-  line: number;
-  detailPos?: DetailPosition;
+  replyTo?: number;
 }
 
 export interface ActiveCommentReply extends UserInfo {
@@ -57,19 +62,8 @@ export interface ActiveCommentReply extends UserInfo {
   id: number;
 }
 
-export interface ActiveComment extends UserInfo {
-  state: CommentState;
-  message: string;
-  html: string;
-  at: number;
-  id: number;
+export interface ActiveComment extends Comment {
   replies: ActiveCommentReply[];
-  path: string;
-  sha: string;
-  // github native comment position is base on diff from: compare/<merge_target_branch>...<commit_sha>
-  githubPosition: number;
-  line: number;
-  detailPos?: DetailPosition;
 }
 
 export interface Review extends UserInfo {
@@ -166,6 +160,7 @@ export interface MergeTargetCommit extends GitObj {
 }
 
 export interface PR {
+  id: number;
   repo: string;
   owner: string;
   loading: boolean;
