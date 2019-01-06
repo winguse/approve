@@ -11,7 +11,7 @@ export default async function convertGithubPosition(
   mergeToSha: string,
 ): Promise<{ detailPos: DetailPosition, sha: string } | undefined> {
   const { githubDiffSummary } = await diffLines(
-    token, owner, repo, filePath, sha, mergeToSha,
+    token, owner, repo, filePath, mergeToSha, sha,
   );
   const { leftLineNumber, rightLineNumber } = githubDiffSummary[githubPosition - 1];
   const line = rightLineNumber || leftLineNumber;
