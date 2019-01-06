@@ -27,15 +27,11 @@ export default async function computeComments(context: ActionContext<PR, StoreRo
     leftRef = endCommit.mergeBaseSha;
   }
   const rightRef = selectedEndCommit;
-  const leftRequest = getFileContentString(token, owner, repo, selectedFile, leftRef);
-  const right = await getFileContentString(token, owner, repo, selectedFile, rightRef);
-  const left = await leftRequest;
   const extension = selectedFile.split('.').pop();
   const safeEndingSpan = [Number.MAX_SAFE_INTEGER, ''];
+  const { diffResult, left, right } = await diffLines(token, owner, repo, selectedFile, leftRef, rightRef);
   const leftSpans = codePrettify(left, extension).concat(safeEndingSpan);
   const rightSpans = codePrettify(right, extension).concat(safeEndingSpan);
-
-  const diffResult = diffLines(left, right);
 
   // refine the line ending diff
   if (diffResult.length) {

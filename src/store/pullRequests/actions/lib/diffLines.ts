@@ -1,10 +1,25 @@
 import * as diff from 'diff';
 import { DiffResult } from '../../index.d';
+import getFileContentString from './getFileContentString';
+import { githubDiffSummary } from './githubPosition';
 
-export default function diffLines(left: string, right: string): DiffResult[] {
+export default async function diffLines(
+  token: string,
+  owner: string,
+  repo: string,
+  filePath: string,
+  leftSha: string,
+  rightSha: string,
+) {
+
+  const [left, right] = await Promise.all([
+    getFileContentString(token, owner, repo, filePath, leftSha),
+    getFileContentString(token, owner, repo, filePath, rightSha),
+  ]);
+
   let leftLineNumber = 0;
   let rightLineNumber = 0;
-  return diff.diffLines(left, right)
+  const diffResult = diff.diffLines(left, right)
   .flatMap(({value, added, removed}) => {
     let startPos = 0;
     const result: DiffResult[] = [];
@@ -29,4 +44,6 @@ export default function diffLines(left: string, right: string): DiffResult[] {
     }
     return result;
   });
+  githubDiffSummary(diffResult, leftSha, rightSha);
+  return { diffResult, left, right };
 }

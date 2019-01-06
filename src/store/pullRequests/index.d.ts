@@ -55,6 +55,7 @@ export interface Comment extends UserInfo, ExtendedComment  {
   id: number;
   path: string;
   sha: string;
+  githubCommentSha: string;
   // github native comment position is base on diff from: compare/<merge_target_branch>...<commit_sha>
   githubPosition: number;
   replyTo?: number;

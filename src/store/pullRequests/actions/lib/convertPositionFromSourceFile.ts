@@ -1,15 +1,22 @@
 import { DetailPosition } from '../../index.d';
 import diffLines from './diffLines';
 
-export default function convertPositionFromSourceFile(source: string, target: string, sourcePos: DetailPosition):
-DetailPosition | undefined {
+export default async function convertPositionFromSourceFile(
+  token: string,
+  owner: string,
+  repo: string,
+  filePath: string,
+  leftSha: string,
+  rightSha: string,
+  sourcePos: DetailPosition,
+): Promise<DetailPosition | undefined> {
 let startLine: number | undefined;
 let startPos: number | undefined;
 let endLine: number | undefined;
 let endPos: number | undefined;
 
-const sr = diffLines(source, target);
-for (const d of sr) {
+const { diffResult } = await diffLines(token, owner, repo, filePath, leftSha, rightSha);
+for (const d of diffResult) {
   if (d.added || d.removed) {
     continue;
   }
