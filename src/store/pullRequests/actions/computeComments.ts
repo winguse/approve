@@ -159,9 +159,9 @@ export default async function computeComments(context: ActionContext<PR, StoreRo
         }
 
         s = e;
-        const final =  result.filter(r => r.value);
+        const final = result.filter(r => r.value);
         if (commentToDisplay) {
-          final[final.length].commentToDisplay = commentToDisplay;
+          final[final.length - 1].commentToDisplay = commentToDisplay;
         }
         return final;
       });

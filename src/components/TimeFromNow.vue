@@ -1,0 +1,72 @@
+<template>
+  <span :class="this.$props.class" :title="timeStr">{{ text }}</span>
+</template>
+
+<style lang="stylus">
+
+</style>
+
+<script lang="ts">
+import { Component, Prop, Vue } from 'vue-property-decorator';
+
+@Component({
+  props: {
+    ts: Number,
+  },
+})
+export default class TimeFromNow extends Vue {
+
+  public data() {
+    const { refresh, text, timeStr } = this.calculateTimeDiff();
+    setTimeout(() => this.refresh(), refresh * 1000);
+    return {
+      timeStr,
+      text,
+    };
+  }
+
+  public calculateTimeDiff() {
+    const { ts } = this.$props;
+    const timeStr = (new Date(ts)).toLocaleString();
+    const seconds = Math.floor((Date.now() - ts) / 1000);
+    if (seconds < 60) {
+      return {
+        timeStr,
+        refresh: 5,
+        text: `${seconds}s ago`,
+      };
+    }
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) {
+      return {
+        timeStr,
+        refresh: 30,
+        text: `${minutes} minutes ago`,
+      };
+    }
+    const hours = Math.floor(seconds / 3600);
+    if (hours < 24) {
+      return {
+        timeStr,
+        refresh: 300,
+        text: `${hours} hours ago`,
+      };
+    }
+    const days = Math.floor(seconds / 3600 / 24);
+    return {
+      timeStr,
+      refresh: 1800,
+      text: `${days} days ago`,
+    };
+  }
+
+  public refresh() {
+    const { refresh, text, timeStr } = this.calculateTimeDiff();
+    // @ts-ignore
+    this.text = text;
+    // @ts-ignore
+    this.timeStr = timeStr;
+    setTimeout(() => this.refresh(), refresh * 1000);
+  }
+}
+</script>
