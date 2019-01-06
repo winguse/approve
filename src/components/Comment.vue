@@ -33,7 +33,7 @@
         </q-item>
         <q-item-separator v-if="c.id > 0" />
         <q-item>
-          <q-item-side :avatar="c.avatarUrl" />
+          <q-item-side :avatar="avatarUrl" />
           <q-item-main>
             <q-item-tile>
               <q-input
@@ -123,6 +123,10 @@ export default class Comment extends Vue {
       cid: this.c.id,
       fragment,
     };
+  }
+
+  get avatarUrl() {
+    return this.store.state.info.avatarUrl;
   }
 
   public data() {
