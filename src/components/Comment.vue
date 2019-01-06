@@ -5,9 +5,15 @@
   }"
     @mousedown="mousedown"
     @mouseup="mouseup"
-    @mouseout="mouseup"
     @mousemove="mousemove"
 >
+  <svg :height="svg.h" :width="svg.w" class="commen-line" :style="{
+    top: svg.t + 'px',
+    left: svg.l + 'px'
+  }" pointer-events="none">
+    <line :x1="svg.x1" :y1="svg.y1" :x2="svg.x2" :y2="svg.y2" style="stroke:rgba(255,225,0,0.8);stroke-width:2" />
+  </svg>
+  <div class="moving-bg" v-if="moving" />
   <q-card>
     <q-card-main>
       <q-list>
@@ -60,12 +66,6 @@
       />
     </q-card-actions>
   </q-card>
-  <svg :height="svg.h" :width="svg.w" class="commen-line" :style="{
-    top: svg.t + 'px',
-    left: svg.l + 'px'
-  }" pointer-events="none">
-    <line :x1="svg.x1" :y1="svg.y1" :x2="svg.x2" :y2="svg.y2" style="stroke:rgba(255,225,0,0.8);stroke-width:2" />
-  </svg>
 </div>
 </template>
 
@@ -77,6 +77,14 @@
 
   .commen-line {
     position: absolute;
+  }
+
+  .moving-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
   }
 }
 </style>
@@ -111,6 +119,7 @@ export default class Comment extends Vue {
 
   public data() {
     return {
+      moving: false,
       inputFocused: false,
       top: 30,
       left: -50,
@@ -218,6 +227,9 @@ export default class Comment extends Vue {
       return;
     }
 
+    // @ts-ignore
+    this.moving = true;
+
     this.mouseStartPos = {
       x: e.clientX,
       y: e.clientY,
@@ -228,6 +240,8 @@ export default class Comment extends Vue {
 
   public mouseup() {
     this.mouseStartPos = undefined;
+    // @ts-ignore
+    this.moving = false;
   }
 
   public mousemove(e: MouseEvent) {
