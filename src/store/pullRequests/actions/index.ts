@@ -13,6 +13,7 @@ import refreshTree from './refreshTree';
 import reloadAllComments from './reloadAllComments';
 import selectFile from './selectFile';
 import submitNewComment from './submitNewComment';
+import updateComment from './updateComment';
 import updateSelectedCommits from './updateSelectedCommits';
 
 const actions: ActionTree<PR, StoreRoot> = {
@@ -27,6 +28,7 @@ const actions: ActionTree<PR, StoreRoot> = {
   cancelNewComment,
   submitNewComment,
   reloadAllComments,
+  updateComment,
 };
 
 export default actions;

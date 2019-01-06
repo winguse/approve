@@ -18,7 +18,10 @@ createdAt
 commit {
   oid
 }
-position
+originalCommit {
+  oid
+}
+originalPosition
 replyTo {
   databaseId
 }
@@ -120,7 +123,7 @@ export default async function load(
     reviews: { nodes: reviews },
   } },
     viewer: currentUser,
-  } } = await executeGraphQlQuery(query, token);
+  } } = await executeGraphQlQuery(query, token, false);
   await context.commit('info/set', currentUser, { root: true });
   const commitList: Commit[] = commits
     .map(({ commit: { additions, deletions, oid: sha, committedDate, messageHeadline,
@@ -177,8 +180,8 @@ export default async function load(
     comments: reviews.flatMap(
       ({ author: { avatarUrl, login }, comments: { nodes } }: any) => {
         return nodes.map(({
-          body: rawMessage, bodyHTML: html, commit: { oid: sha }, createdAt,
-          databaseId: id, replyTo, position: githubPosition, path,
+          body: rawMessage, bodyHTML: html, originalCommit: { oid: sha }, createdAt,
+          databaseId: id, replyTo, originalPosition: githubPosition, path,
         }: any) => {
           const [, message, , json] = rawMessage.match(commentMessageReg);
           const fragment: ExtendedComment = {

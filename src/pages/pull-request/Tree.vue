@@ -31,6 +31,9 @@ export default class CommitSelector extends Vue {
   }
 
   set selectedFile(file) {
+    if (!file) {
+      return;
+    }
     if (file.endsWith('/')) {
       let expanded = [...this.expandedDir];
       if (expanded.indexOf(file) === -1) {

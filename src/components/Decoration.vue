@@ -1,11 +1,20 @@
 <template>
-  <td class="code"><span v-for="(hl, idx) in hls" :key="idx" :class="hl.css">{{ hl.value }}<comment v-if="hl.comment" :c="hl.comment" /></span></td>
+  <td class="code"><span
+    v-for="(hl, idx) in hls"
+    :key="idx"
+    :class="hl.css"
+    :data-length="hl.value.length"
+  >{{ hl.value }}<comment
+    v-for="c in hl.comments"
+    :c="c"
+    :key="c.id"
+  /></span></td>
 </template>
 
 <style lang="stylus">
 
 .code {
-  white-space: pre;
+  white-space: pre-wrap;
 
   &>span {
     position: relative;
@@ -41,7 +50,7 @@ import Comment from './Comment.vue';
 interface DisplayHighlight {
   value: string;
   css: { [key: string]: boolean };
-  comment?: ActiveComment;
+  comments: ActiveComment[];
 }
 
 @Component({
@@ -65,6 +74,7 @@ export default class Decoration extends Vue {
         css: {
           [type]: true,
         },
+        comments: [],
       };
       if (commentIds) {
         result.css.comment = true;
@@ -73,7 +83,7 @@ export default class Decoration extends Vue {
         }
       }
       if (commentToDisplay) {
-        result.comment = commentToDisplay;
+        result.comments = commentToDisplay;
       }
       return result;
     });

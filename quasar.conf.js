@@ -86,6 +86,8 @@ module.exports = function config(ctx) {
         'QList',
         'QListHeader',
         'QItem',
+        'QItemTile',
+        'QItemSeparator',
         'QItemMain',
         'QItemSide',
         'QBreadcrumbs',
