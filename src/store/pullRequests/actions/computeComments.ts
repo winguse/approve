@@ -168,7 +168,11 @@ export default async function computeComments(context: ActionContext<PR, StoreRo
       return { ...change, hightLights };
     });
     if (lastHighlight) {
-      lastHighlight.commentToDisplay = comment;
+      if (lastHighlight.commentToDisplay) {
+        lastHighlight.commentToDisplay.push(comment);
+      } else {
+        lastHighlight.commentToDisplay = [comment];
+      }
     }
   }
   context.commit('setActiveChanges', changesWithComments);

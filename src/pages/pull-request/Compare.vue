@@ -127,11 +127,15 @@ function getPreviousLength(node: Node | null): number {
     return 0;
   }
   if (node.nodeType === Node.TEXT_NODE) {
-    node = node.parentElement && node.parentElement.previousSibling; // span's older brother
+    // @ts-ignore
+    let span: HTMLElement | null = node.parentElement && node.parentElement.previousSibling; // span's older brother
     let l = 0;
-    while (node) {
-      l += (node.textContent || '').length;
-      node = node.previousSibling;
+    while (span) {
+      // @ts-ignore
+      const length = +(span.dataset.length || 0);
+      l += length;
+      // @ts-ignore
+      span = span.previousSibling;
     }
     return l;
   }

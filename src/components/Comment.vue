@@ -48,7 +48,7 @@
             </q-item-tile>
           </q-item-main>
         </q-item>
-        <q-item v-if="inputFocused || newCommentMessage">
+        <q-item v-if="inputFocused || newCommentMessage || c.id === 0">
           <q-item-main style="text-align: right">
             <q-btn color="primary" label="Submit" @click="inputSubmit" size="sm"/>
             <span>&nbsp;</span>

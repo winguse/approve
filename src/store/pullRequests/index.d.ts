@@ -139,7 +139,7 @@ export interface HightLight {
   value: string;
   commentIds?: number[];
   // this is the last highlight of the comment id
-  commentToDisplay?: ActiveComment;
+  commentToDisplay?: ActiveComment[];
 }
 
 export interface ChangedLine {
