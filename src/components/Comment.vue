@@ -170,7 +170,7 @@ export default class Comment extends Vue {
 
   @Watch('commentState')
   public onCommentStateChange(val: CommentState, oldVal: CommentState) {
-    if (val === oldVal) {
+    if (val === this.c.state) {
       return;
     }
     const { changableFields } = this;
