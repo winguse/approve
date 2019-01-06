@@ -21,7 +21,7 @@ commit {
 originalCommit {
   oid
 }
-position
+originalPosition
 replyTo {
   databaseId
 }
@@ -180,8 +180,8 @@ export default async function load(
     comments: reviews.flatMap(
       ({ author: { avatarUrl, login }, comments: { nodes } }: any) => {
         return nodes.map(({
-          body: rawMessage, bodyHTML: html, originalCommit: { oid: sha }, commit: { oid: githubCommentSha }, createdAt,
-          databaseId: id, replyTo, position: githubPosition, path,
+          body: rawMessage, bodyHTML: html, originalCommit: { oid: sha }, createdAt,
+          databaseId: id, replyTo, originalPosition: githubPosition, path,
         }: any) => {
           const [, message, , json] = rawMessage.match(commentMessageReg);
           const fragment: ExtendedComment = {
@@ -194,7 +194,7 @@ export default async function load(
             Object.assign(fragment, JSON.parse(json));
           }
           const comment: Comment = {
-            avatarUrl, login, message, html, sha, githubCommentSha, at: toTimestamp(createdAt), id,
+            avatarUrl, login, message, html, sha, at: toTimestamp(createdAt), id,
             replyTo: replyTo && replyTo.databaseId, githubPosition, path,
             ...fragment,
           };

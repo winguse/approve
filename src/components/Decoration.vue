@@ -14,7 +14,7 @@
 <style lang="stylus">
 
 .code {
-  white-space: pre;
+  white-space: pre-wrap;
 
   &>span {
     position: relative;

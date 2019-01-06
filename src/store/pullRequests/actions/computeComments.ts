@@ -2,10 +2,10 @@
 import { ActionContext } from 'vuex';
 import { codePrettify } from '../../../utils';
 import { StoreRoot } from '../../index.d';
-import { ActiveComment, ChangedLine, HightLight, PR } from '../index.d';
+import { ActiveComment, ChangedLine, DetailPosition, HightLight, PR } from '../index.d';
+import convertGithubPosition from './lib/convertGithubPosition';
 import convertPosition from './lib/convertPosition';
 import diffLines from './lib/diffLines';
-import getFileContentString from './lib/getFileContentString';
 import refineDiffResult from './lib/refineDiffResult';
 import runPretty from './lib/runPretty';
 
@@ -13,7 +13,7 @@ export default async function computeComments(context: ActionContext<PR, StoreRo
   // tslint:disable-next-line:no-console
   // console.log('compute');
   const {
-    state: { comments, selectedStartCommit, selectedEndCommit, owner, mergeTo: { branch }, commits
+    state: { comments, selectedStartCommit, selectedEndCommit, owner, mergeTo: { branch, sha: mergeToSha }, commits
     , repo, newComment, selectedFile },
     rootState: { config: { token } },
   } = context;
@@ -102,9 +102,52 @@ export default async function computeComments(context: ActionContext<PR, StoreRo
   }
   let changesWithComments = activeChanges;
   for (const comment of activeComments) {
-    const newPos = await convertPosition(
-      comment, selectedStartCommit, selectedEndCommit, token, owner, repo,
-    );
+    let newPos: { detailPos: DetailPosition, useRight: boolean } | undefined;
+    if (comment.line === 0) {
+      const posInfo = await convertGithubPosition(
+        comment.path,
+        comment.sha,
+        comment.githubPosition,
+        token,
+        owner,
+        repo,
+        mergeToSha,
+      );
+      if (posInfo) {
+        newPos = await convertPosition(
+          posInfo.detailPos,
+          posInfo.sha,
+          selectedStartCommit,
+          selectedEndCommit,
+          comment.path,
+          token,
+          owner,
+          repo,
+        );
+      }
+    } else {
+      const detailPosition: DetailPosition = comment.detailPos || {
+        start: {
+          line: comment.line,
+          position: 0,
+        },
+        end: {
+          line: comment.line,
+          position: Number.MAX_SAFE_INTEGER,
+        },
+      };
+      newPos = await convertPosition(
+        detailPosition,
+        comment.sha,
+        selectedStartCommit,
+        selectedEndCommit,
+        comment.path,
+        token,
+        owner,
+        repo,
+      );
+    }
+
     if (!newPos) {
       // this comment is missed due to source update
       continue;

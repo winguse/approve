@@ -20,7 +20,6 @@ export default async function openCommentInput(
     replies: [],
     path: selectedFile,
     sha: selection.sha,
-    githubCommentSha: selection.sha,
     githubPosition: 0,
     line: selection.endLine,
     detailPos: {

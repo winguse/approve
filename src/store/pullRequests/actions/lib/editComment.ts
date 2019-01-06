@@ -9,7 +9,7 @@ export default async function editComment(
   }
   const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/comments/${cid}`;
   const response = await fetch(url, {
-    method: 'POST',
+    method: 'PATCH',
     headers: {
       Authorization: `token ${token}`,
     },
