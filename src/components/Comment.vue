@@ -90,20 +90,19 @@
 </style>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { Store } from 'vuex';
 import { StoreRoot } from '../store/index.d';
 import { CommentState } from '../store/pullRequests/enums';
-import { ActiveComment } from '../store/pullRequests/index.d';
+import { ActiveComment, ChangeableCommentFields, ExtendedComment } from '../store/pullRequests/index.d';
 import TimeFromNow from './TimeFromNow.vue';
 
 @Component({
-  props: {
-    c: Object,
-  },
   components: { TimeFromNow },
 })
 export default class Comment extends Vue {
+
+  @Prop(Object) public c!: ActiveComment;
 
   private get store() {
     const store: Store<StoreRoot> = this.$store;
@@ -112,9 +111,18 @@ export default class Comment extends Vue {
 
   private mouseStartPos: { x: number, y: number, top: number, left: number } | undefined ;
 
-  get cmt(): ActiveComment {
-    // @ts-ignore
-    return this.c;
+  get changableFields(): ChangeableCommentFields {
+    const fragment: ExtendedComment =  {
+      state: this.c.state,
+      line: this.c.line,
+      detailPos: this.c.detailPos,
+      boxPos: this.c.boxPos,
+    };
+    return {
+      message: this.c.message,
+      cid: this.c.id,
+      fragment,
+    };
   }
 
   public data() {
@@ -124,6 +132,7 @@ export default class Comment extends Vue {
       top: 30,
       left: -50,
       newCommentMessage: '',
+      commentState: CommentState.Active,
       commentStateOptions: [{
         label: 'Active',
         value: CommentState.Active,
@@ -159,12 +168,20 @@ export default class Comment extends Vue {
     return {w, h, t, l, x1, x2, y1, y2};
   }
 
-  get commentState() {
-    return this.cmt.state;
-  }
-
-  set commentState(v) {
-    // TODO
+  @Watch('commentState')
+  public onCommentStateChange(val: CommentState, oldVal: CommentState) {
+    if (val === oldVal) {
+      return;
+    }
+    const { changableFields } = this;
+    const changes: ChangeableCommentFields = {
+      ...changableFields,
+      fragment: {
+        ...changableFields.fragment,
+        state: val,
+      },
+    };
+    this.store.dispatch('pullRequests/updateComment', changes);
   }
 
   public cancelNewComment() {
@@ -178,12 +195,12 @@ export default class Comment extends Vue {
   }
 
   public replyComment() {
-    if (this.cmt.id <= 0 ) {
+    if (this.c.id <= 0 ) {
       return;
     }
     // @ts-ignore
     const { newCommentMessage }: { newCommentMessage: string } = this;
-    this.store.dispatch('pullRequests/replyComment', { id: this.cmt.id, newCommentMessage });
+    this.store.dispatch('pullRequests/replyComment', { id: this.c.id, newCommentMessage });
   }
 
   public cancleReply() {
@@ -192,7 +209,7 @@ export default class Comment extends Vue {
   }
 
   public inputSubmit() {
-    if (this.cmt.id > 0 ) {
+    if (this.c.id > 0 ) {
       this.replyComment();
     } else {
       this.submitNewComment();
@@ -200,7 +217,7 @@ export default class Comment extends Vue {
   }
 
   public inputCancle() {
-    if (this.cmt.id > 0 ) {
+    if (this.c.id > 0 ) {
       this.cancleReply();
     } else {
       this.cancelNewComment();
@@ -242,6 +259,22 @@ export default class Comment extends Vue {
     this.mouseStartPos = undefined;
     // @ts-ignore
     this.moving = false;
+    if (this.c.id > 0) {
+      const boxPos = this.c.boxPos || { left: undefined, top: undefined };
+      // @ts-ignore
+      const { left, top } = this;
+      if (left !== boxPos.left || top !== boxPos.top) {
+        const { changableFields } = this;
+        const fragment: ExtendedComment = {
+            ...changableFields.fragment,
+            boxPos: { left, top },
+        };
+        this.store.dispatch('pullRequests/updateComment', {
+          ...changableFields,
+          fragment,
+        });
+      }
+    }
   }
 
   public mousemove(e: MouseEvent) {
@@ -255,6 +288,18 @@ export default class Comment extends Vue {
     this.left = e.clientX - x + left;
     // @ts-ignore
     this.top = e.clientY - y + top;
+  }
+
+  public created() {
+    if (this.c.boxPos) {
+      const { left, top } = this.c.boxPos;
+      // @ts-ignore
+      this.left = left;
+      // @ts-ignore
+      this.top = top;
+      // @ts-ignore
+      this.commentState = this.c.state;
+    }
   }
 }
 </script>

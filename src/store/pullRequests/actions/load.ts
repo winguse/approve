@@ -120,7 +120,7 @@ export default async function load(
     reviews: { nodes: reviews },
   } },
     viewer: currentUser,
-  } } = await executeGraphQlQuery(query, token);
+  } } = await executeGraphQlQuery(query, token, false);
   await context.commit('info/set', currentUser, { root: true });
   const commitList: Commit[] = commits
     .map(({ commit: { additions, deletions, oid: sha, committedDate, messageHeadline,

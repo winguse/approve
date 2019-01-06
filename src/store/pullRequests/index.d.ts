@@ -42,6 +42,11 @@ export interface ExtendedComment {
   boxPos?: {top: number, left: number}
 }
 
+export interface ChangeableCommentFields {
+  fragment: ExtendedComment
+  message: string
+  cid: number
+}
 
 export interface Comment extends UserInfo, ExtendedComment  {
   message: string;
