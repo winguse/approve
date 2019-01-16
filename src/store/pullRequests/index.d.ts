@@ -37,6 +37,9 @@ export interface UserInfo {
 
 export interface ExtendedComment {
   state: CommentState;
+  // useful for overriding the comment submitted to github
+  // because github doesn't allow to comment on mergeToSha
+  sha?: string;
   line: number;
   detailPos?: DetailPosition;
   boxPos?: {top: number, left: number}
