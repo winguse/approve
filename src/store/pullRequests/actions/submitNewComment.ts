@@ -47,4 +47,7 @@ export default async function submitNewComment(
   // TODO the new comment is returned here, but without rendered html field
   // i am not using that right now, but doing a hard reload is good way to maintain consistence
   await submitComment(token, owner, repo, id, diffSha, selectedFile, githubPosition, body);
+  await context.dispatch('cancelNewComment');
+  await context.dispatch('load', {owner, repo, pullId: id}); // TODO loading comment may be enough
+  await context.dispatch('computeComments');
 }
