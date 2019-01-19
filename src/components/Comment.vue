@@ -58,11 +58,14 @@
       </q-list>
     </q-card-main>
     <q-card-separator />
-    <q-card-actions align="end" v-if="c.id > 0">
+    <q-card-actions v-if="c.id > 0">
+      <q-btn flat icon="transit_enterexit" />
+      <q-btn flat icon="delete" />
       <q-select
         v-model="commentState"
         :options="commentStateOptions"
         hide-underline
+        style="margin-left: auto"
       />
     </q-card-actions>
   </q-card>
