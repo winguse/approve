@@ -153,7 +153,7 @@ import { ActiveComment, ChangeableCommentFields, ExtendedComment } from '../stor
 import TimeFromNow from './TimeFromNow.vue';
 
 const DEFAULT_TOP = 50;
-const DEFAULT_RIGHT = 30;
+const DEFAULT_RIGHT = -30;
 
 @Component({
   components: { TimeFromNow },
