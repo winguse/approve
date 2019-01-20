@@ -42,7 +42,7 @@ export interface ExtendedComment {
   sha?: string;
   line: number;
   detailPos?: DetailPosition;
-  boxPos?: {top: number, left: number}
+  boxPos?: {top: number, right: number}
 }
 
 export interface ChangeableCommentFields {

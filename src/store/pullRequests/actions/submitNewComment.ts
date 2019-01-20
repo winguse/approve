@@ -7,7 +7,7 @@ import submitComment from './lib/submitComment';
 
 export default async function submitNewComment(
   context: ActionContext<PR, StoreRoot>,
-  { top, left, newCommentMessage }: { top: number, left: number, newCommentMessage: string },
+  { top, right, newCommentMessage }: { top: number, right: number, newCommentMessage: string },
 ) {
   const {
     newComment, selectedFile, id, owner, repo, mergeFrom: { sha: mergeFromSha },
@@ -40,7 +40,7 @@ export default async function submitNewComment(
     state: CommentState.Active,
     line,
     detailPos,
-    boxPos: { top, left },
+    boxPos: { top, right },
     sha,
   };
   const body = `${newCommentMessage}<!--${JSON.stringify(fragment)}-->`;
@@ -48,6 +48,6 @@ export default async function submitNewComment(
   // i am not using that right now, but doing a hard reload is good way to maintain consistence
   await submitComment(token, owner, repo, id, diffSha, selectedFile, githubPosition, body);
   await context.dispatch('cancelNewComment');
-  await context.dispatch('load', {owner, repo, pullId: id}); // TODO loading comment may be enough
+  await context.dispatch('refreshComments');
   await context.dispatch('computeComments');
 }

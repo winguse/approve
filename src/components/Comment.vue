@@ -1,7 +1,7 @@
 <template>
 <div class="comment-box" :style="{
     top: top + 'px',
-    left: left + 'px',
+    right: right + 'px',
   }"
     @mousedown="mousedown"
     @mouseup="mouseup"
@@ -9,7 +9,7 @@
 >
   <svg :height="svg.h" :width="svg.w" class="commen-line" :style="{
     top: svg.t + 'px',
-    left: svg.l + 'px'
+    right: svg.r + 'px'
   }" pointer-events="none">
     <line :x1="svg.x1" :y1="svg.y1" :x2="svg.x2" :y2="svg.y2" style="stroke:rgba(255,225,0,0.8);stroke-width:2" />
   </svg>
@@ -58,11 +58,14 @@
       </q-list>
     </q-card-main>
     <q-card-separator />
-    <q-card-actions align="end" v-if="c.id > 0">
+    <q-card-actions v-if="c.id > 0">
+      <q-btn flat icon="transit_enterexit" />
+      <q-btn flat icon="delete" @click="deleteComment" />
       <q-select
         v-model="commentState"
         :options="commentStateOptions"
         hide-underline
+        style="margin-left: auto"
       />
     </q-card-actions>
   </q-card>
@@ -97,6 +100,9 @@ import { CommentState } from '../store/pullRequests/enums';
 import { ActiveComment, ChangeableCommentFields, ExtendedComment } from '../store/pullRequests/index.d';
 import TimeFromNow from './TimeFromNow.vue';
 
+const DEFAULT_TOP = 50;
+const DEFAULT_RIGHT = 30;
+
 @Component({
   components: { TimeFromNow },
 })
@@ -109,7 +115,7 @@ export default class Comment extends Vue {
     return store;
   }
 
-  private mouseStartPos: { x: number, y: number, top: number, left: number } | undefined ;
+  private mouseStartPos: { x: number, y: number, top: number, right: number } | undefined ;
 
   get changableFields(): ChangeableCommentFields {
     const fragment: ExtendedComment =  {
@@ -133,8 +139,8 @@ export default class Comment extends Vue {
     return {
       moving: false,
       inputFocused: false,
-      top: 30,
-      left: -50,
+      top: DEFAULT_TOP,
+      right: DEFAULT_RIGHT,
       newCommentMessage: '',
       commentState: CommentState.Active,
       commentStateOptions: [{
@@ -158,18 +164,18 @@ export default class Comment extends Vue {
 
   get svg() {
     // @ts-ignore
-    const { top, left }: { top: number, left: number } = this;
-    const w = Math.abs(left);
+    const { top, right }: { top: number, right: number } = this;
+    const w = Math.abs(right);
     const h = Math.abs(top);
     const t = Math.min(0, -top);
-    const l = Math.min(0, -left);
+    const r = Math.min(0, -right);
 
-    const x1 = t === 0 ? w : 0;
-    const x2 = t === 0 ? 0 : w;
-    const y1 = l === 0 ? h : 0;
-    const y2 = l === 0 ? 0   : h;
+    const x1 = t !== 0 ? w : 0;
+    const x2 = t !== 0 ? 0 : w;
+    const y1 = r === 0 ? h : 0;
+    const y2 = r === 0 ? 0 : h;
 
-    return {w, h, t, l, x1, x2, y1, y2};
+    return {w, h, t, r, x1, x2, y1, y2};
   }
 
   @Watch('commentState')
@@ -192,10 +198,14 @@ export default class Comment extends Vue {
     this.store.dispatch('pullRequests/cancelNewComment');
   }
 
+  public deleteComment() {
+    this.store.dispatch('pullRequests/deleteComment', this.c.id);
+  }
+
   public submitNewComment() {
     // @ts-ignore
-    const { top, left, newCommentMessage }: { top: number, left: number, newCommentMessage: string } = this;
-    this.store.dispatch('pullRequests/submitNewComment', { top, left, newCommentMessage });
+    const { top, right, newCommentMessage }: { top: number, right: number, newCommentMessage: string } = this;
+    this.store.dispatch('pullRequests/submitNewComment', { top, right, newCommentMessage });
   }
 
   public replyComment() {
@@ -255,7 +265,7 @@ export default class Comment extends Vue {
       x: e.clientX,
       y: e.clientY,
       // @ts-ignore
-      top: this.top, left: this.left,
+      top: this.top, right: this.right,
     };
   }
 
@@ -264,14 +274,14 @@ export default class Comment extends Vue {
     // @ts-ignore
     this.moving = false;
     if (this.c.id > 0) {
-      const boxPos = this.c.boxPos || { left: undefined, top: undefined };
+      const boxPos = this.c.boxPos || { right: undefined, top: undefined };
       // @ts-ignore
-      const { left, top } = this;
-      if (left !== boxPos.left || top !== boxPos.top) {
+      const { right, top } = this;
+      if (right !== boxPos.right || top !== boxPos.top) {
         const { changableFields } = this;
         const fragment: ExtendedComment = {
             ...changableFields.fragment,
-            boxPos: { left, top },
+            boxPos: { right, top },
         };
         this.store.dispatch('pullRequests/updateComment', {
           ...changableFields,
@@ -287,20 +297,20 @@ export default class Comment extends Vue {
     }
     e.preventDefault();
     e.stopPropagation();
-    const { x, y, top, left } = this.mouseStartPos;
+    const { x, y, top, right } = this.mouseStartPos;
     // @ts-ignore
-    this.left = e.clientX - x + left;
+    this.right = -(e.clientX - x) + right;
     // @ts-ignore
     this.top = e.clientY - y + top;
   }
 
   public created() {
     if (this.c.boxPos) {
-      const { left, top } = this.c.boxPos;
+      const { right, top } = this.c.boxPos;
       // @ts-ignore
-      this.left = left;
+      this.right = right || DEFAULT_RIGHT;
       // @ts-ignore
-      this.top = top;
+      this.top = top || DEFAULT_TOP;
       // @ts-ignore
       this.commentState = this.c.state;
     }
