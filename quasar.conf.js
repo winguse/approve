@@ -34,7 +34,7 @@ module.exports = function config(ctx) {
       'material-icons', // optional, you are not bound to it
       // 'ionicons',
       // 'mdi',
-      // 'fontawesome'
+      'fontawesome',
     ],
     supportIE: false,
     build: {
@@ -82,6 +82,7 @@ module.exports = function config(ctx) {
         'QToolbarTitle',
         'QBtn',
         'QIcon',
+        'QTooltip',
         'QInput',
         'QList',
         'QListHeader',

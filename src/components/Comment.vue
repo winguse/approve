@@ -1,5 +1,10 @@
 <template>
-<div class="comment-box" :style="{
+<span>
+<q-icon v-if="c.minimize" :class="'comment-status-icon comment-state-' + c.state" name="comment"
+  @click.stop.native="toggleCommentMinimizeStatus" @mouseover.stop.native="showCommentBox = true" @mouseout.stop.native="showCommentBox = false">
+  <!-- <q-tooltip>{{ c.state }}: {{ c.message }}</q-tooltip> -->
+</q-icon>
+<div v-if="!c.minimize || showCommentBox" class="comment-box" :style="{
     top: top + 'px',
     right: right + 'px',
   }"
@@ -20,14 +25,27 @@
         <q-item v-if="c.message">
           <q-item-side :avatar="c.avatarUrl" />
           <q-item-main>
-            <q-item-tile sublabel>@{{ c.login }} <time-from-now :ts="c.at" /></q-item-tile>
+            <q-item-tile sublabel class="comment-info">
+              <span>@{{ c.login }}</span>
+              <time-from-now :ts="c.at" />
+              <a :href="githubUrl + c.id" target="_blank" class="goto-github" title="goto Github">
+                <q-icon name="fab fa-github"/>
+              </a>
+            </q-item-tile>
             <q-item-tile v-html="c.html"></q-item-tile>
           </q-item-main>
         </q-item>
         <q-item v-for="r in c.replies" :key="r.id">
           <q-item-side :avatar="r.avatarUrl" />
           <q-item-main>
-            <q-item-tile sublabel>@{{ r.login }} <time-from-now :ts="r.at" /></q-item-tile>
+            <q-item-tile sublabel class="comment-info">
+              <span>@{{ r.login }}</span>
+              <time-from-now :ts="r.at" />
+              <a :href="githubUrl + r.id" target="_blank" class="goto-github" title="goto Github">
+                <q-icon name="fab fa-github"/>
+              </a>
+              <q-icon name="delete" class="delete-comment" @click.stop.native="deleteComment" :data-id="r.id" title="delete"/>
+            </q-item-tile>
             <q-item-tile v-html="r.html"></q-item-tile>
           </q-item-main>
         </q-item>
@@ -59,8 +77,8 @@
     </q-card-main>
     <q-card-separator />
     <q-card-actions v-if="c.id > 0">
-      <q-btn flat icon="transit_enterexit" />
-      <q-btn flat icon="delete" @click="deleteComment" />
+      <q-btn flat icon="transit_enterexit" @click="toggleCommentMinimizeStatus"/>
+      <q-btn flat icon="delete" @click="deleteComment" :data-id="c.id" />
       <q-select
         v-model="commentState"
         :options="commentStateOptions"
@@ -70,10 +88,12 @@
     </q-card-actions>
   </q-card>
 </div>
+</span>
 </template>
 
 <style lang="stylus">
 .comment-box {
+  color: black;
   position: absolute;
   background: white;
   z-index: 1000;
@@ -90,6 +110,45 @@
     height: 100%;
   }
 }
+.comment-status-icon {
+  position: absolute;
+  opacity: 0.9;
+  top: -85%;
+  right: 0;
+  font-size: 18px;
+  cursor: pointer;
+  &:HOVER {
+    opacity: 0.7;
+  }
+}
+.comment-state-Active {
+  color: red;
+}
+.comment-state-Pending {
+  color: yellow;
+}
+.comment-state-Resolved {
+  color: blue;
+}
+.comment-state-WontFix {
+  color: gray;
+}
+.comment-state-WontFix {
+  color: green;
+}
+.goto-github {
+  text-decoration: none;
+  color: #757575;
+  &:ACTIVE, &:VISITED {
+    color: #757575;
+  }
+}
+.delete-comment {
+  cursor: pointer;
+}
+.comment-info > * {
+  margin-right: 0.5em;
+}
 </style>
 
 <script lang="ts">
@@ -101,7 +160,7 @@ import { ActiveComment, ChangeableCommentFields, ExtendedComment } from '../stor
 import TimeFromNow from './TimeFromNow.vue';
 
 const DEFAULT_TOP = 50;
-const DEFAULT_RIGHT = 30;
+const DEFAULT_RIGHT = -30;
 
 @Component({
   components: { TimeFromNow },
@@ -123,12 +182,18 @@ export default class Comment extends Vue {
       line: this.c.line,
       detailPos: this.c.detailPos,
       boxPos: this.c.boxPos,
+      minimize: this.c.minimize,
     };
     return {
       message: this.c.message,
       cid: this.c.id,
       fragment,
     };
+  }
+
+  get githubUrl() {
+    const { state: { pullRequests: { owner, repo, id } }} = this.store;
+    return `https://github.com/${owner}/${repo}/pull/${id}#discussion_r`;
   }
 
   get avatarUrl() {
@@ -159,6 +224,7 @@ export default class Comment extends Vue {
         label: 'Closed',
         value: CommentState.Closed,
       }],
+      showCommentBox: false,
     };
   }
 
@@ -198,8 +264,26 @@ export default class Comment extends Vue {
     this.store.dispatch('pullRequests/cancelNewComment');
   }
 
-  public deleteComment() {
-    this.store.dispatch('pullRequests/deleteComment', this.c.id);
+  public deleteComment(e: Event) {
+    // @ts-ignore
+    const commentId = +e.target.dataset.id;
+    if (!commentId) {
+      return;
+    }
+    this.store.dispatch('pullRequests/deleteComment', commentId);
+  }
+
+  public toggleCommentMinimizeStatus() {
+    const { changableFields } = this;
+    const minimize = !changableFields.fragment.minimize;
+    const changes: ChangeableCommentFields = {
+      ...changableFields,
+      fragment: {
+        ...changableFields.fragment,
+        minimize,
+      },
+    };
+    this.store.dispatch('pullRequests/updateComment', changes);
   }
 
   public submitNewComment() {
@@ -208,13 +292,14 @@ export default class Comment extends Vue {
     this.store.dispatch('pullRequests/submitNewComment', { top, right, newCommentMessage });
   }
 
-  public replyComment() {
+  public async replyComment() {
     if (this.c.id <= 0 ) {
       return;
     }
     // @ts-ignore
     const { newCommentMessage }: { newCommentMessage: string } = this;
-    this.store.dispatch('pullRequests/replyComment', { id: this.c.id, newCommentMessage });
+    await this.store.dispatch('pullRequests/replyComment', { replyToId: this.c.id, message: newCommentMessage });
+    this.cancleReply();
   }
 
   public cancleReply() {
