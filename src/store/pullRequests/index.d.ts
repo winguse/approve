@@ -43,6 +43,7 @@ export interface ExtendedComment {
   line: number;
   detailPos?: DetailPosition;
   boxPos?: {top: number, right: number}
+  minimize?: boolean
 }
 
 export interface ChangeableCommentFields {
