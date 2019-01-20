@@ -11,5 +11,6 @@ export default async function updateComment(
   const { rootState: { config: { token } } } = context;
   const body = `${message}<!--${JSON.stringify(fragment)}-->`;
   await editComment(token, owner, repo, cid, body);
-  // TODO update store
+  await context.dispatch('refreshComments');
+  await context.dispatch('computeComments');
 }

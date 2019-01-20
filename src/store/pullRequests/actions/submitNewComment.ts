@@ -48,7 +48,6 @@ export default async function submitNewComment(
   // i am not using that right now, but doing a hard reload is good way to maintain consistence
   await submitComment(token, owner, repo, id, diffSha, selectedFile, githubPosition, body);
   await context.dispatch('cancelNewComment');
-  await context.dispatch('load', {owner, repo, pullId: id}); // TODO loading comment may be enough
-  await context.commit('selectFile', selectedFile);
+  await context.dispatch('refreshComments');
   await context.dispatch('computeComments');
 }

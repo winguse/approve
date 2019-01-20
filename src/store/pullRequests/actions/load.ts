@@ -9,7 +9,7 @@ import executeGraphQlQuery from './lib/executeGraphQlQuery';
 
 const commentMessageReg = /(.*?)(<!--(.+)-->)?$/;
 
-const commentFields = `
+export const commentFields = `
 databaseId
 path
 body
@@ -107,6 +107,49 @@ repository(name: "${repo}", owner: "${owner}") {
 }`;
 }
 
+export function convertReviews(reviews: any): {
+  comments: Comment[],
+  reviews: Map<string, Review>,
+} {
+  return {
+    comments: reviews.flatMap(
+      ({ author: { avatarUrl, login }, comments: { nodes } }: any) => {
+        return nodes.map(({
+          body: rawMessage, bodyHTML: html, originalCommit: { oid: sha }, createdAt,
+          databaseId: id, replyTo, originalPosition: githubPosition, path,
+        }: any) => {
+          const [, message, , json] = rawMessage.match(commentMessageReg);
+          const fragment: ExtendedComment = {
+            line: 0,
+            state: CommentState.Active,
+            detailPos: undefined,
+            boxPos: undefined,
+          };
+          if (json) {
+            Object.assign(fragment, JSON.parse(json));
+          }
+          const comment: Comment = {
+            avatarUrl, login, message, html, sha, at: toTimestamp(createdAt), id,
+            replyTo: replyTo && replyTo.databaseId, githubPosition, path,
+            ...fragment,
+          };
+          return comment;
+        });
+      },
+    ),
+    reviews: reviews.map(
+      ({ author: { avatarUrl, login }, state, createdAt }: any) =>
+        ({ avatarUrl, login, state, at: toTimestamp(createdAt) }),
+    ).reduce((acc: Map<string, Review>, cur: Review) => {
+      const last = acc.get(cur.login);
+      if (!last || last.at < cur.at) {
+        acc.set(cur.login, cur);
+      }
+      return acc;
+    }, new Map<string, Review>()),
+  };
+}
+
 function toTimestamp(dateStr: string) {
   return new Date(dateStr).getTime();
 }
@@ -177,41 +220,7 @@ export default async function load(
     },
     tree: [],
     activeChanges: [],
-    comments: reviews.flatMap(
-      ({ author: { avatarUrl, login }, comments: { nodes } }: any) => {
-        return nodes.map(({
-          body: rawMessage, bodyHTML: html, originalCommit: { oid: sha }, createdAt,
-          databaseId: id, replyTo, originalPosition: githubPosition, path,
-        }: any) => {
-          const [, message, , json] = rawMessage.match(commentMessageReg);
-          const fragment: ExtendedComment = {
-            line: 0,
-            state: CommentState.Active,
-            detailPos: undefined,
-            boxPos: undefined,
-          };
-          if (json) {
-            Object.assign(fragment, JSON.parse(json));
-          }
-          const comment: Comment = {
-            avatarUrl, login, message, html, sha, at: toTimestamp(createdAt), id,
-            replyTo: replyTo && replyTo.databaseId, githubPosition, path,
-            ...fragment,
-          };
-          return comment;
-        });
-      },
-    ),
-    reviews: reviews.map(
-      ({ author: { avatarUrl, login }, state, createdAt }: any) =>
-        ({ avatarUrl, login, state, at: toTimestamp(createdAt) }),
-    ).reduce((acc: Map<string, Review>, cur: Review) => {
-      const last = acc.get(cur.login);
-      if (!last || last.at < cur.at) {
-        acc.set(cur.login, cur);
-      }
-      return acc;
-    }, new Map<string, Review>()),
+    ...convertReviews(reviews),
     commits: commitsMap,
     commitShaList,
     selectedEndCommit: headRefOid,

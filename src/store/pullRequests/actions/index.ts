@@ -10,6 +10,7 @@ import deleteComment from './deleteComment';
 import load from './load';
 import loadCommitReviewFiles from './loadCommitReviewFiles';
 import openCommentInput from './openCommentInput';
+import refreshComments from './refreshComments';
 import refreshTree from './refreshTree';
 import reloadAllComments from './reloadAllComments';
 import selectFile from './selectFile';
@@ -31,6 +32,7 @@ const actions: ActionTree<PR, StoreRoot> = {
   reloadAllComments,
   updateComment,
   deleteComment,
+  refreshComments,
 };
 
 export default actions;

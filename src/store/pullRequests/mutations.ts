@@ -1,5 +1,5 @@
 import log from 'js-logger';
-import { ActiveComment, ChangedLine, PR, ReviewFile, TreeDirectory, TreeItem } from './index.d';
+import { ActiveComment, ChangedLine, PR, Review, ReviewFile, TreeDirectory, TreeItem } from './index.d';
 import { emptyState } from './state';
 
 export function clear(state: PR) {
@@ -16,6 +16,13 @@ export function addReview(state: PR) {
 
 export function load(state: PR, pr: PR) {
   Object.assign(state, pr);
+}
+
+export function refreshComments(state: PR, segments: {
+  comments: Comment[],
+  reviews: Map<string, Review>,
+}) {
+  Object.assign(state, segments);
 }
 
 export function loadCommitReviewFiles(state: PR, { sha, reviewFiles, mergeBaseSha }:

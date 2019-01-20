@@ -10,7 +10,6 @@ export default async function deleteComment(
   const { owner, repo, selectedFile, id } = context.state;
   const { rootState: { config: { token } } } = context;
   await deleteCommentApi(token, owner, repo, cid);
-  await context.dispatch('load', {owner, repo, pullId: id}); // TODO loading comment may be enough
-  await context.commit('selectFile', selectedFile);
+  await context.dispatch('refreshComments');
   await context.dispatch('computeComments');
 }
