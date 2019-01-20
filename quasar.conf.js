@@ -93,6 +93,7 @@ module.exports = function config(ctx) {
         'QItemSide',
         'QBreadcrumbs',
         'QBreadcrumbsEl',
+        'QAjaxBar',
       ],
       directives: [
         'Ripple',
@@ -100,7 +101,14 @@ module.exports = function config(ctx) {
       // Quasar plugins
       plugins: [
         'Notify',
+        'LoadingBar',
       ],
+      config: {
+        loadingBar: {
+          // QAjaxBar properties
+          size: '4px',
+        },
+      },
       iconSet: ctx.theme.mat ? 'material-icons' : 'ionicons'
       // i18n: 'de' // Quasar language
     },

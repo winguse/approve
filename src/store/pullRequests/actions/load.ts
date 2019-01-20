@@ -124,6 +124,7 @@ export function convertReviews(reviews: any): {
             state: CommentState.Active,
             detailPos: undefined,
             boxPos: undefined,
+            minimize: true,
           };
           if (json) {
             Object.assign(fragment, JSON.parse(json));
