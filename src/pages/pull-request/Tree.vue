@@ -1,6 +1,7 @@
 <template>
-  <q-layout-drawer side="left" :overlay="false" v-model="showTree">
+  <q-layout-drawer side="left" :overlay="false" v-model="showTree" content-class="column">
     <q-tree
+      class="affected-files"
       :nodes="tree"
       :selected.sync="selectedFile"
       :expanded.sync="expandedDir"
@@ -8,10 +9,15 @@
       node-key="fullPath"
       default-expand-all
     />
+
+    <div class="over-all">content</div>
   </q-layout-drawer>
 </template>
 
 <style>
+.affected-files {
+  margin-bottom: auto;
+}
 </style>
 
 <script lang="ts">

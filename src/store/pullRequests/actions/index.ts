@@ -1,5 +1,6 @@
 
 import { ActionTree } from 'vuex';
+import showProgress from '../../../lib/showProgress';
 import { StoreRoot } from '../../index.d';
 import { PR } from '../index.d';
 
@@ -36,5 +37,10 @@ const actions: ActionTree<PR, StoreRoot> = {
   refreshComments,
   replyComment,
 };
+
+Object.keys(actions).forEach(name => {
+  // @ts-ignore
+  actions[name] = showProgress(actions[name]);
+});
 
 export default actions;

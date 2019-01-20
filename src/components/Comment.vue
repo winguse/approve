@@ -77,8 +77,8 @@
     </q-card-main>
     <q-card-separator />
     <q-card-actions v-if="c.id > 0">
-      <q-btn flat icon="transit_enterexit" @click="toggleCommentMinimizeStatus"/>
-      <q-btn flat icon="delete" @click="deleteComment" :data-id="c.id" />
+      <q-btn flat icon="transit_enterexit" @click.stop="toggleCommentMinimizeStatus"/>
+      <q-btn flat icon="delete" @click.stop="deleteComment" :data-id="c.id" />
       <q-select
         v-model="commentState"
         :options="commentStateOptions"
@@ -276,6 +276,10 @@ export default class Comment extends Vue {
   public toggleCommentMinimizeStatus() {
     const { changableFields } = this;
     const minimize = !changableFields.fragment.minimize;
+    if (minimize === true) {
+      // @ts-ignore
+      this.showCommentBox = false;
+    }
     const changes: ChangeableCommentFields = {
       ...changableFields,
       fragment: {
