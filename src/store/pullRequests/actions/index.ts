@@ -6,6 +6,7 @@ import { PR } from '../index.d';
 import cancelNewComment from './cancelNewComment';
 import clear from './clear';
 import computeComments from './computeComments';
+import deleteComment from './deleteComment';
 import load from './load';
 import loadCommitReviewFiles from './loadCommitReviewFiles';
 import openCommentInput from './openCommentInput';
@@ -29,6 +30,7 @@ const actions: ActionTree<PR, StoreRoot> = {
   submitNewComment,
   reloadAllComments,
   updateComment,
+  deleteComment,
 };
 
 export default actions;

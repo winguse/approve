@@ -60,7 +60,7 @@
     <q-card-separator />
     <q-card-actions v-if="c.id > 0">
       <q-btn flat icon="transit_enterexit" />
-      <q-btn flat icon="delete" />
+      <q-btn flat icon="delete" @click="deleteComment" />
       <q-select
         v-model="commentState"
         :options="commentStateOptions"
@@ -196,6 +196,10 @@ export default class Comment extends Vue {
 
   public cancelNewComment() {
     this.store.dispatch('pullRequests/cancelNewComment');
+  }
+
+  public deleteComment() {
+    this.store.dispatch('pullRequests/deleteComment', this.c.id);
   }
 
   public submitNewComment() {
