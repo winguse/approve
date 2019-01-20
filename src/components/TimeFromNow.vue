@@ -33,7 +33,7 @@ export default class TimeFromNow extends Vue {
       return {
         timeStr,
         refresh: 5,
-        text: `${seconds}s ago`,
+        text: `${seconds}s`,
       };
     }
     const minutes = Math.floor(seconds / 60);
@@ -41,7 +41,7 @@ export default class TimeFromNow extends Vue {
       return {
         timeStr,
         refresh: 30,
-        text: `${minutes} minutes ago`,
+        text: `${minutes}m`,
       };
     }
     const hours = Math.floor(seconds / 3600);
@@ -49,14 +49,14 @@ export default class TimeFromNow extends Vue {
       return {
         timeStr,
         refresh: 300,
-        text: `${hours} hours ago`,
+        text: `${hours}h`,
       };
     }
     const days = Math.floor(seconds / 3600 / 24);
     return {
       timeStr,
       refresh: 1800,
-      text: `${days} days ago`,
+      text: `${days}d`,
     };
   }
 

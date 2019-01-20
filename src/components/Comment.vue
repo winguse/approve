@@ -25,12 +25,12 @@
         <q-item v-if="c.message">
           <q-item-side :avatar="c.avatarUrl" />
           <q-item-main>
-            <q-item-tile sublabel>
+            <q-item-tile sublabel class="comment-info">
               <span>@{{ c.login }}</span>
-              <a :href="githubUrl + c.id" target="_blank" class="goto-github">
+              <time-from-now :ts="c.at" />
+              <a :href="githubUrl + c.id" target="_blank" class="goto-github" title="goto Github">
                 <q-icon name="fab fa-github"/>
               </a>
-              <time-from-now :ts="c.at" />
             </q-item-tile>
             <q-item-tile v-html="c.html"></q-item-tile>
           </q-item-main>
@@ -38,12 +38,13 @@
         <q-item v-for="r in c.replies" :key="r.id">
           <q-item-side :avatar="r.avatarUrl" />
           <q-item-main>
-            <q-item-tile sublabel>
+            <q-item-tile sublabel class="comment-info">
               <span>@{{ r.login }}</span>
-              <a :href="githubUrl + r.id" target="_blank" class="goto-github">
+              <time-from-now :ts="r.at" />
+              <a :href="githubUrl + r.id" target="_blank" class="goto-github" title="goto Github">
                 <q-icon name="fab fa-github"/>
               </a>
-              <time-from-now :ts="r.at" />
+              <q-icon name="delete" class="delete-comment" @click.stop.native="deleteComment" :data-id="r.id" title="delete"/>
             </q-item-tile>
             <q-item-tile v-html="r.html"></q-item-tile>
           </q-item-main>
@@ -77,7 +78,7 @@
     <q-card-separator />
     <q-card-actions v-if="c.id > 0">
       <q-btn flat icon="transit_enterexit" @click="toggleCommentMinimizeStatus"/>
-      <q-btn flat icon="delete" @click="deleteComment" />
+      <q-btn flat icon="delete" @click="deleteComment" :data-id="c.id" />
       <q-select
         v-model="commentState"
         :options="commentStateOptions"
@@ -137,10 +138,16 @@
 }
 .goto-github {
   text-decoration: none;
-  margin: 0 0.5em;
-  &:VISITED {
+  color: #757575;
+  &:ACTIVE, &:VISITED {
     color: #757575;
   }
+}
+.delete-comment {
+  cursor: pointer;
+}
+.comment-info > * {
+  margin-right: 0.5em;
 }
 </style>
 
@@ -257,8 +264,13 @@ export default class Comment extends Vue {
     this.store.dispatch('pullRequests/cancelNewComment');
   }
 
-  public deleteComment() {
-    this.store.dispatch('pullRequests/deleteComment', this.c.id);
+  public deleteComment(e: Event) {
+    // @ts-ignore
+    const commentId = +e.target.dataset.id;
+    if (!commentId) {
+      return;
+    }
+    this.store.dispatch('pullRequests/deleteComment', commentId);
   }
 
   public toggleCommentMinimizeStatus() {
@@ -280,13 +292,14 @@ export default class Comment extends Vue {
     this.store.dispatch('pullRequests/submitNewComment', { top, right, newCommentMessage });
   }
 
-  public replyComment() {
+  public async replyComment() {
     if (this.c.id <= 0 ) {
       return;
     }
     // @ts-ignore
     const { newCommentMessage }: { newCommentMessage: string } = this;
-    this.store.dispatch('pullRequests/replyComment', { id: this.c.id, newCommentMessage });
+    await this.store.dispatch('pullRequests/replyComment', { replyToId: this.c.id, message: newCommentMessage });
+    this.cancleReply();
   }
 
   public cancleReply() {

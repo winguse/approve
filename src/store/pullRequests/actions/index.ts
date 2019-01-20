@@ -13,6 +13,7 @@ import openCommentInput from './openCommentInput';
 import refreshComments from './refreshComments';
 import refreshTree from './refreshTree';
 import reloadAllComments from './reloadAllComments';
+import replyComment from './replyComment';
 import selectFile from './selectFile';
 import submitNewComment from './submitNewComment';
 import updateComment from './updateComment';
@@ -33,6 +34,7 @@ const actions: ActionTree<PR, StoreRoot> = {
   updateComment,
   deleteComment,
   refreshComments,
+  replyComment,
 };
 
 export default actions;
