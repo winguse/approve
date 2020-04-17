@@ -1,28 +1,28 @@
-import { DiffResult } from '../../index.d';
+import { DiffResult } from '../../index.d'
 
-export default function refineDiffResult(
+export default function refineDiffResult (
   diffResult: DiffResult[],
   added: boolean | undefined,
-  removed: boolean | undefined,
+  removed: boolean | undefined
 ) {
-  const tmp: DiffResult[] = [];
+  const tmp: DiffResult[] = []
   while (diffResult.length > 0) {
     // @ts-ignore
-    const last: DiffResult = diffResult.pop();
+    const last: DiffResult = diffResult.pop()
     if (last.added === added && last.removed === removed) {
-      diffResult.push(last);
+      diffResult.push(last)
       if (last.value.endsWith('\n')) {
         diffResult.push({
           value: '',
           added,
           removed,
           leftLineNumber: last.leftLineNumber && last.leftLineNumber + 1,
-          rightLineNumber: last.rightLineNumber && last.rightLineNumber + 1,
-        });
+          rightLineNumber: last.rightLineNumber && last.rightLineNumber + 1
+        })
       }
-      break;
+      break
     }
-    tmp.unshift(last);
+    tmp.unshift(last)
   }
-  tmp.forEach(t => diffResult.push(t));
+  tmp.forEach(t => diffResult.push(t))
 }

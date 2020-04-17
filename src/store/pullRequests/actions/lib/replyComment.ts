@@ -1,22 +1,23 @@
 
-import { GITHUB_API_BASE } from './shared';
+import { GITHUB_API_BASE } from './shared'
 
-export default async function replyComment(
-  token: string, owner: string, repo: string, prId: number, replyToId: number, body: string,
+export default async function replyComment (
+  token: string, owner: string, repo: string, prId: number, replyToId: number, body: string
 ) {
   if (!token) {
-    throw new Error('Github toke is needed');
+    throw new Error('Github toke is needed')
   }
-  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${prId}/comments`;
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${prId}/comments`
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      Authorization: `token ${token}`,
+      Authorization: `token ${token}`
     },
     body: JSON.stringify({
       body,
-      in_reply_to: replyToId,
-    }),
-  });
-  return await response.json();
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      in_reply_to: replyToId
+    })
+  })
+  return await response.json()
 }

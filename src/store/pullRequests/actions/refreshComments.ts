@@ -1,10 +1,10 @@
-import { ActionContext } from 'vuex';
-import { StoreRoot } from '../../index.d';
-import { PR } from '../index.d';
-import executeGraphQlQuery from './lib/executeGraphQlQuery';
-import { commentFields, convertReviews } from './load';
+import { ActionContext } from 'vuex'
+import { StoreRoot } from '../../index.d'
+import { PR } from '../index.d'
+import executeGraphQlQuery from './lib/executeGraphQlQuery'
+import { commentFields, convertReviews } from './load'
 
-function refreshCommentsQuery(owner: string, repo: string, pullId: number) {
+function refreshCommentsQuery (owner: string, repo: string, pullId: number) {
   return `
   fragment commentsFg on PullRequestReviewCommentConnection {
   nodes {
@@ -47,15 +47,15 @@ function refreshCommentsQuery(owner: string, repo: string, pullId: number) {
       }
     }
   }
-  }`;
+  }`
 }
 
-export default async function refreshComments(context: ActionContext<PR, StoreRoot>) {
+export default async function refreshComments (context: ActionContext<PR, StoreRoot>) {
   //
-  const { rootState: { config: { token } }, state: { id, owner, repo } } = context;
-  const query = refreshCommentsQuery(owner, repo, id);
+  const { rootState: { config: { token } }, state: { id, owner, repo } } = context
+  const query = refreshCommentsQuery(owner, repo, id)
   const { data: { repository: { pullRequest: { reviews: { nodes: reviews } } } } } =
-    await executeGraphQlQuery(query, token, false);
-  const commandAndReviews = convertReviews(reviews);
-  await context.commit('refreshComments', commandAndReviews);
+    await executeGraphQlQuery(query, token, false)
+  const commandAndReviews = convertReviews(reviews)
+  context.commit('refreshComments', commandAndReviews)
 }

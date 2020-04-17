@@ -1,9 +1,9 @@
-import { Commit, GitObj, PR, Review } from './index.d';
+import { Commit, GitObj, PR, Review } from './index.d'
 
 const emptyGitObj: GitObj = {
   sha: '',
-  branch: '',
-};
+  branch: ''
+}
 
 export const emptyState: PR = {
   id: 0,
@@ -21,7 +21,7 @@ export const emptyState: PR = {
   commits: new Map<string, Commit>(),
   activeChanges: [],
   selectedEndCommit: '',
-  selectedStartCommit: '',
-};
+  selectedStartCommit: ''
+}
 
-export default Object.assign({}, emptyState);
+export default Object.assign({}, emptyState)

@@ -41,11 +41,11 @@
 </style>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Store } from 'vuex';
-import { StoreRoot } from '../store/index.d';
-import { ActiveComment, HightLight } from '../store/pullRequests/index.d';
-import Comment from './Comment.vue';
+import { Component, Vue } from 'vue-property-decorator'
+import { Store } from 'vuex'
+import { StoreRoot } from '../store/index.d'
+import { ActiveComment, HightLight } from '../store/pullRequests/index.d'
+import Comment from './Comment.vue'
 
 interface DisplayHighlight {
   value: string;
@@ -55,38 +55,38 @@ interface DisplayHighlight {
 
 @Component({
   props: {
-    hightLights: Array,
+    hightLights: Array
   },
-  components: { Comment },
+  components: { Comment }
 })
 export default class Decoration extends Vue {
-  private get store() {
-    const store: Store<StoreRoot> = this.$store;
-    return store;
+  private get store () {
+    const store: Store<StoreRoot> = this.$store
+    return store
   }
 
-  get hls() {
+  get hls () {
     // @ts-ignore
-    const { hightLights }: { hightLights: HightLight[] } = this;
+    const { hightLights }: { hightLights: HightLight[] } = this
     return hightLights.map(({ type, value, commentIds, commentToDisplay }) => {
       const result: DisplayHighlight = {
         value,
         css: {
-          [type]: true,
+          [type]: true
         },
-        comments: [],
-      };
+        comments: []
+      }
       if (commentIds) {
-        result.css.comment = true;
+        result.css.comment = true
         for (const commentId of commentIds) {
-          result.css[`comment-${commentId}`] = true;
+          result.css[`comment-${commentId}`] = true
         }
       }
       if (commentToDisplay) {
-        result.comments = commentToDisplay;
+        result.comments = commentToDisplay
       }
-      return result;
-    });
+      return result
+    })
   }
 }
 </script>

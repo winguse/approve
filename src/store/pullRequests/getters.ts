@@ -1,5 +1,5 @@
-import { PR } from './index.d';
+import { PR } from './index.d'
 
-export function getAll(state: PR) {
-  return state;
+export function getAll (state: PR) {
+  return state
 }

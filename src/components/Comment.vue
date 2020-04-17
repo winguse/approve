@@ -19,63 +19,68 @@
     <line :x1="svg.x1" :y1="svg.y1" :x2="svg.x2" :y2="svg.y2" style="stroke:rgba(255,225,0,0.8);stroke-width:2" />
   </svg>
   <div class="moving-bg" v-if="moving" />
-  <q-card>
-    <q-card-main>
+  <q-card style="width: 30em">
       <q-list>
         <q-item v-if="c.message">
-          <q-item-side :avatar="c.avatarUrl" />
-          <q-item-main>
-            <q-item-tile sublabel class="comment-info">
+          <q-item-section avatar>
+            <q-avatar rounded>
+              <img :src="c.avatarUrl">
+            </q-avatar>
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>
               <span>@{{ c.login }}</span>
               <time-from-now :ts="c.at" />
               <a :href="githubUrl + c.id" target="_blank" class="goto-github" title="goto Github">
                 <q-icon name="fab fa-github"/>
               </a>
-            </q-item-tile>
-            <q-item-tile v-html="c.html"></q-item-tile>
-          </q-item-main>
+            </q-item-label>
+            <q-item-label v-html="c.html"></q-item-label>
+          </q-item-section>
         </q-item>
         <q-item v-for="r in c.replies" :key="r.id">
-          <q-item-side :avatar="r.avatarUrl" />
-          <q-item-main>
-            <q-item-tile sublabel class="comment-info">
+          <q-item-section avatar>
+            <q-avatar rounded>
+              <img :src="r.avatarUrl">
+            </q-avatar>
+          </q-item-section>
+
+          <q-item-section>
+            <q-item-label>
               <span>@{{ r.login }}</span>
               <time-from-now :ts="r.at" />
               <a :href="githubUrl + r.id" target="_blank" class="goto-github" title="goto Github">
                 <q-icon name="fab fa-github"/>
               </a>
               <q-icon name="delete" class="delete-comment" @click.stop.native="deleteComment" :data-id="r.id" title="delete"/>
-            </q-item-tile>
-            <q-item-tile v-html="r.html"></q-item-tile>
-          </q-item-main>
+            </q-item-label>
+            <q-item-label v-html="r.html"></q-item-label>
+          </q-item-section>
+
         </q-item>
-        <q-item-separator v-if="c.id > 0" />
+        <q-separator v-if="c.id > 0" />
         <q-item>
-          <q-item-side :avatar="avatarUrl" />
-          <q-item-main>
-            <q-item-tile>
-              <q-input
-                v-model="newCommentMessage"
-                type="textarea"
-                :placeholder="c.id === 0 ? 'New Comment' : 'Reply'"
-                hide-underline
-                @keyup.ctrl.exact.enter.prevent="inputSubmit"
-                @focus="inputFocused = true"
-                @blur="inputFocused = false"
-              />
-            </q-item-tile>
-          </q-item-main>
+          <q-item-section>
+            <q-input
+              v-model="newCommentMessage"
+              autogrow
+              type="textarea"
+              :placeholder="c.id === 0 ? 'New Comment' : 'Reply'"
+              hide-underline
+              @keyup.ctrl.exact.enter.prevent="inputSubmit"
+              @focus="inputFocused = true"
+              @blur="inputFocused = false"
+            />
+          </q-item-section>
         </q-item>
         <q-item v-if="inputFocused || newCommentMessage || c.id === 0">
-          <q-item-main style="text-align: right">
+          <q-card-actions>
             <q-btn color="primary" label="Submit" @click="inputSubmit" size="sm"/>
-            <span>&nbsp;</span>
             <q-btn label="Cancle" @click="inputCancle" size="sm"/>
-          </q-item-main>
+          </q-card-actions>
         </q-item>
       </q-list>
-    </q-card-main>
-    <q-card-separator />
+    <q-separator />
     <q-card-actions v-if="c.id > 0">
       <q-btn flat icon="transit_enterexit" @click.stop="toggleCommentMinimizeStatus"/>
       <q-btn flat icon="delete" @click.stop="deleteComment" :data-id="c.id" />
@@ -152,55 +157,54 @@
 </style>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
-import { Store } from 'vuex';
-import { StoreRoot } from '../store/index.d';
-import { CommentState } from '../store/pullRequests/enums';
-import { ActiveComment, ChangeableCommentFields, ExtendedComment } from '../store/pullRequests/index.d';
-import TimeFromNow from './TimeFromNow.vue';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
+import { Store } from 'vuex'
+import { StoreRoot } from '../store/index.d'
+import { CommentState } from '../store/pullRequests/enums'
+import { ActiveComment, ChangeableCommentFields, ExtendedComment } from '../store/pullRequests/index.d'
+import TimeFromNow from './TimeFromNow.vue'
 
-const DEFAULT_TOP = 50;
-const DEFAULT_RIGHT = -30;
+const DEFAULT_TOP = 50
+const DEFAULT_RIGHT = -30
 
 @Component({
-  components: { TimeFromNow },
+  components: { TimeFromNow }
 })
 export default class Comment extends Vue {
-
   @Prop(Object) public c!: ActiveComment;
 
-  private get store() {
-    const store: Store<StoreRoot> = this.$store;
-    return store;
+  private get store () {
+    const store: Store<StoreRoot> = this.$store
+    return store
   }
 
-  private mouseStartPos: { x: number, y: number, top: number, right: number } | undefined ;
+  private mouseStartPos: { x: number; y: number; top: number; right: number } | undefined ;
 
-  get changableFields(): ChangeableCommentFields {
-    const fragment: ExtendedComment =  {
+  get changableFields (): ChangeableCommentFields {
+    const fragment: ExtendedComment = {
       state: this.c.state,
       line: this.c.line,
       detailPos: this.c.detailPos,
       boxPos: this.c.boxPos,
-      minimize: this.c.minimize,
-    };
+      minimize: this.c.minimize
+    }
     return {
       message: this.c.message,
       cid: this.c.id,
-      fragment,
-    };
+      fragment
+    }
   }
 
-  get githubUrl() {
-    const { state: { pullRequests: { owner, repo, id } }} = this.store;
-    return `https://github.com/${owner}/${repo}/pull/${id}#discussion_r`;
+  get githubUrl () {
+    const { state: { pullRequests: { owner, repo, id } } } = this.store
+    return `https://github.com/${owner}/${repo}/pull/${id}#discussion_r`
   }
 
-  get avatarUrl() {
-    return this.store.state.info.avatarUrl;
+  get avatarUrl () {
+    return this.store.state.info.avatarUrl
   }
 
-  public data() {
+  public data () {
     return {
       moving: false,
       inputFocused: false,
@@ -210,198 +214,200 @@ export default class Comment extends Vue {
       commentState: CommentState.Active,
       commentStateOptions: [{
         label: 'Active',
-        value: CommentState.Active,
+        value: CommentState.Active
       }, {
         label: 'Pending',
-        value: CommentState.Pending,
+        value: CommentState.Pending
       }, {
         label: 'Resolved',
-        value: CommentState.Resolved,
+        value: CommentState.Resolved
       }, {
         label: 'Won\'t Fix',
-        value: CommentState.WontFix,
+        value: CommentState.WontFix
       }, {
         label: 'Closed',
-        value: CommentState.Closed,
+        value: CommentState.Closed
       }],
-      showCommentBox: false,
-    };
+      showCommentBox: false
+    }
   }
 
-  get svg() {
+  get svg () {
     // @ts-ignore
-    const { top, right }: { top: number, right: number } = this;
-    const w = Math.abs(right);
-    const h = Math.abs(top);
-    const t = Math.min(0, -top);
-    const r = Math.min(0, -right);
+    const { top, right }: { top: number; right: number } = this
+    const w = Math.abs(right)
+    const h = Math.abs(top)
+    const t = Math.min(0, -top)
+    const r = Math.min(0, -right)
 
-    const x1 = t !== 0 ? w : 0;
-    const x2 = t !== 0 ? 0 : w;
-    const y1 = r === 0 ? h : 0;
-    const y2 = r === 0 ? 0 : h;
+    const x1 = t !== 0 ? w : 0
+    const x2 = t !== 0 ? 0 : w
+    const y1 = r === 0 ? h : 0
+    const y2 = r === 0 ? 0 : h
 
-    return {w, h, t, r, x1, x2, y1, y2};
+    return { w, h, t, r, x1, x2, y1, y2 }
   }
 
   @Watch('commentState')
-  public onCommentStateChange(val: CommentState, oldVal: CommentState) {
+  public onCommentStateChange (val: CommentState, oldVal: CommentState) {
     if (val === this.c.state) {
-      return;
+      return
     }
-    const { changableFields } = this;
+    const { changableFields } = this
     const changes: ChangeableCommentFields = {
       ...changableFields,
       fragment: {
         ...changableFields.fragment,
-        state: val,
-      },
-    };
-    this.store.dispatch('pullRequests/updateComment', changes);
-  }
-
-  public cancelNewComment() {
-    this.store.dispatch('pullRequests/cancelNewComment');
-  }
-
-  public deleteComment(e: Event) {
-    // @ts-ignore
-    const commentId = +e.target.dataset.id;
-    if (!commentId) {
-      return;
+        state: val
+      }
     }
-    this.store.dispatch('pullRequests/deleteComment', commentId);
+    this.store.dispatch('pullRequests/updateComment', changes)
   }
 
-  public toggleCommentMinimizeStatus() {
-    const { changableFields } = this;
-    const minimize = !changableFields.fragment.minimize;
+  public cancelNewComment () {
+    this.store.dispatch('pullRequests/cancelNewComment')
+  }
+
+  public deleteComment (e: Event) {
+    // @ts-ignore
+    const commentId = +e.target.dataset.id
+    if (!commentId) {
+      return
+    }
+    this.store.dispatch('pullRequests/deleteComment', commentId)
+  }
+
+  public toggleCommentMinimizeStatus () {
+    const { changableFields } = this
+    const minimize = !changableFields.fragment.minimize
     if (minimize === true) {
       // @ts-ignore
-      this.showCommentBox = false;
+      this.showCommentBox = false
     }
     const changes: ChangeableCommentFields = {
       ...changableFields,
       fragment: {
         ...changableFields.fragment,
-        minimize,
-      },
-    };
-    this.store.dispatch('pullRequests/updateComment', changes);
+        minimize
+      }
+    }
+    this.store.dispatch('pullRequests/updateComment', changes)
   }
 
-  public submitNewComment() {
+  public submitNewComment () {
     // @ts-ignore
-    const { top, right, newCommentMessage }: { top: number, right: number, newCommentMessage: string } = this;
-    this.store.dispatch('pullRequests/submitNewComment', { top, right, newCommentMessage });
+    const { top, right, newCommentMessage }: { top: number; right: number; newCommentMessage: string } = this
+    this.store.dispatch('pullRequests/submitNewComment', { top, right, newCommentMessage })
   }
 
-  public async replyComment() {
-    if (this.c.id <= 0 ) {
-      return;
+  public async replyComment () {
+    if (this.c.id <= 0) {
+      return
     }
     // @ts-ignore
-    const { newCommentMessage }: { newCommentMessage: string } = this;
-    await this.store.dispatch('pullRequests/replyComment', { replyToId: this.c.id, message: newCommentMessage });
-    this.cancleReply();
+    const { newCommentMessage }: { newCommentMessage: string } = this
+    await this.store.dispatch('pullRequests/replyComment', { replyToId: this.c.id, message: newCommentMessage })
+    this.cancleReply()
   }
 
-  public cancleReply() {
+  public cancleReply () {
     // @ts-ignore
-    this.newCommentMessage = '';
+    this.newCommentMessage = ''
   }
 
-  public inputSubmit() {
-    if (this.c.id > 0 ) {
-      this.replyComment();
+  public inputSubmit () {
+    if (this.c.id > 0) {
+      this.replyComment()
     } else {
-      this.submitNewComment();
+      this.submitNewComment()
     }
   }
 
-  public inputCancle() {
-    if (this.c.id > 0 ) {
-      this.cancleReply();
+  public inputCancle () {
+    if (this.c.id > 0) {
+      this.cancleReply()
     } else {
-      this.cancelNewComment();
+      this.cancelNewComment()
     }
   }
 
-  public mousedown(e: MouseEvent) {
+  public mousedown (e: MouseEvent) {
     // @ts-ignore
-    let target: any = e.target;
-    let insideList = false;
+    let target: any = e.target
+    let insideList = false
 
     for (let i = 0; i < 10; i++) {
       if (!target) {
-        break;
+        break
       }
       if (target.classList.contains('q-list')) {
-        insideList = true;
-        break;
+        insideList = true
+        break
       }
-      target = target.parentElement;
+      target = target.parentElement
     }
 
     if (insideList) {
-      return;
+      return
     }
 
     // @ts-ignore
-    this.moving = true;
+    this.moving = true
 
     this.mouseStartPos = {
       x: e.clientX,
       y: e.clientY,
       // @ts-ignore
-      top: this.top, right: this.right,
-    };
+      top: this.top,
+      // @ts-ignore
+      right: this.right
+    }
   }
 
-  public mouseup() {
-    this.mouseStartPos = undefined;
+  public mouseup () {
+    this.mouseStartPos = undefined
     // @ts-ignore
-    this.moving = false;
+    this.moving = false
     if (this.c.id > 0) {
-      const boxPos = this.c.boxPos || { right: undefined, top: undefined };
+      const boxPos = this.c.boxPos || { right: undefined, top: undefined }
       // @ts-ignore
-      const { right, top } = this;
+      const { right, top } = this
       if (right !== boxPos.right || top !== boxPos.top) {
-        const { changableFields } = this;
+        const { changableFields } = this
         const fragment: ExtendedComment = {
-            ...changableFields.fragment,
-            boxPos: { right, top },
-        };
+          ...changableFields.fragment,
+          boxPos: { right, top }
+        }
         this.store.dispatch('pullRequests/updateComment', {
           ...changableFields,
-          fragment,
-        });
+          fragment
+        })
       }
     }
   }
 
-  public mousemove(e: MouseEvent) {
+  public mousemove (e: MouseEvent) {
     if (!this.mouseStartPos) {
-      return;
+      return
     }
-    e.preventDefault();
-    e.stopPropagation();
-    const { x, y, top, right } = this.mouseStartPos;
+    e.preventDefault()
+    e.stopPropagation()
+    const { x, y, top, right } = this.mouseStartPos
     // @ts-ignore
-    this.right = -(e.clientX - x) + right;
+    this.right = -(e.clientX - x) + right
     // @ts-ignore
-    this.top = e.clientY - y + top;
+    this.top = e.clientY - y + top
   }
 
-  public created() {
+  public created () {
     if (this.c.boxPos) {
-      const { right, top } = this.c.boxPos;
+      const { right, top } = this.c.boxPos
       // @ts-ignore
-      this.right = right || DEFAULT_RIGHT;
+      this.right = right || DEFAULT_RIGHT
       // @ts-ignore
-      this.top = top || DEFAULT_TOP;
+      this.top = top || DEFAULT_TOP
       // @ts-ignore
-      this.commentState = this.c.state;
+      this.commentState = this.c.state
     }
   }
 }

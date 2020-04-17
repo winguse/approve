@@ -1,5 +1,5 @@
-import { Info } from './index.d';
+import { Info } from './index.d'
 
-export function getAll(state: Info) {
-  return state;
+export function getAll (state: Info) {
+  return state
 }

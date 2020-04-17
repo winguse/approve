@@ -1,7 +1,7 @@
 <template>
-  <q-layout-drawer side="right" :overlay="true" v-model="showCommentList">
+  <q-drawer side="right" :overlay="true" v-model="showCommentList">
     comment list
-  </q-layout-drawer>
+  </q-drawer>
 </template>
 
 <style>
@@ -10,8 +10,8 @@
 <script lang="ts">
 export default {
   name: 'CommentList',
-  data() {
-    return {showCommentList: true};
-  },
-};
+  data () {
+    return { showCommentList: false }
+  }
+}
 </script>

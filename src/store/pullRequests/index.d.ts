@@ -1,5 +1,5 @@
-import { CommentState, ReviewState } from './enums';
-import * as diff from 'diff';
+import { CommentState, ReviewState } from './enums'
+import * as diff from 'diff'
 
 export interface FileItem {
   name: string;
@@ -42,17 +42,17 @@ export interface ExtendedComment {
   sha?: string;
   line: number;
   detailPos?: DetailPosition;
-  boxPos?: {top: number, right: number}
-  minimize?: boolean
+  boxPos?: {top: number; right: number};
+  minimize?: boolean;
 }
 
 export interface ChangeableCommentFields {
-  fragment: ExtendedComment
-  message: string
-  cid: number
+  fragment: ExtendedComment;
+  message: string;
+  cid: number;
 }
 
-export interface Comment extends UserInfo, ExtendedComment  {
+export interface Comment extends UserInfo, ExtendedComment {
   message: string;
   html: string;
   at: number;
@@ -99,8 +99,8 @@ export interface ReviewFile extends FileItem {
    *    compatible to Github's position
    */
   diff?: string;
-  additions: number,
-  deletions: number,
+  additions: number;
+  deletions: number;
   sha: string;
 }
 
@@ -211,7 +211,7 @@ export interface ChangeSelection {
   endIdx: number;
 }
 
-export interface DiffResult extends diff.IDiffResult {
+export interface DiffResult extends diff.Change {
   leftLineNumber?: number;
   rightLineNumber?: number;
 }
