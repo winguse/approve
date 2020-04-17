@@ -1,8 +1,6 @@
 #!/bin/bash
 
-cd dist/spa-mat
-
-echo rove.app > CNAME
+cd dist/spa
 
 git init
 git add .

@@ -1,6 +1,6 @@
 # Approve
 
-Try it: https://rove.app !
+Try it: https://wingu.se/approve
 
 ## Motivation
 
