@@ -1,5 +1,5 @@
-import { Config } from './index.d';
+import { Config } from './index.d'
 
-export function getAll(state: Config) {
-  return state;
+export function getAll (state: Config) {
+  return state
 }

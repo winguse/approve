@@ -1,8 +1,8 @@
-import { Info } from './index.d';
+import { Info } from './index.d'
 
 const state: Info = {
   login: '',
-  avatarUrl: '',
-};
+  avatarUrl: ''
+}
 
-export default state;
+export default state

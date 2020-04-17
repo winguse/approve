@@ -1,22 +1,18 @@
 <template>
   <q-layout view="hhh Lpr lFf">
-    <q-layout-header>
+    <q-header>
       <q-toolbar
         color="primary"
         :glossy="$q.theme === 'mat'"
         :inverted="$q.theme === 'ios'"
       >
-        <q-toolbar-title>
+        <q-breadcrumbs active-color="white" color="light" v-if="paths.length > 0">
+          <q-breadcrumbs-el v-for="path in paths" :label="path" :key="path"/>
+        </q-breadcrumbs>
+        <span v-else>
           {{ title }}
-          <div slot="subtitle">
-            <q-breadcrumbs active-color="white" color="light" v-if="paths.length > 0">
-              <q-breadcrumbs-el v-for="path in paths" :label="path" :key="path"/>
-            </q-breadcrumbs>
-            <span v-else>
-              Running on Quasar v{{ $q.version }}
-            </span>
-          </div>
-        </q-toolbar-title>
+        </span>
+        <q-space />
         <q-btn
           flat
           dense
@@ -29,7 +25,7 @@
       </q-toolbar>
       <router-view name="insideHeader" />
       <configurations v-model="configOpened" />
-    </q-layout-header>
+    </q-header>
 
     <router-view name="left" />
     <router-view name="right" />
@@ -44,43 +40,45 @@
 </template>
 
 <script lang="ts">
-import { openURL } from 'quasar';
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Store } from 'vuex';
-import Configurations from '../components/Configurations.vue';
-import { StoreRoot } from '../store/index.d';
+import { openURL } from 'quasar'
+import { Component, Vue } from 'vue-property-decorator'
+import { Store } from 'vuex'
+import Configurations from '../components/Configurations.vue'
+import { StoreRoot } from '../store/index.d'
 
 @Component({
-  components: { Configurations },
+  components: { Configurations }
 })
 export default class CommitSelector extends Vue {
-  private get store() {
-    const store: Store<StoreRoot> = this.$store;
-    return store;
-  }
-  public data() {
-    return {
-      configOpened: !localStorage.getItem('token'),
-    };
-  }
-  get title() {
-    // @ts-ignore
-    const titleFromRoute: string = this.$route.meta.title;
-    return titleFromRoute;
-  }
-  get paths() {
-    // @ts-ignore
-    const { owner, repo }: { owner: string, repo: string } = this.$route.params;
-    if (repo) {
-      return ['Approve', owner, repo];
-    }
-    return [];
-  }
-  public openURL(url: string) {
-    // @ts-ignore
-    openUrl(url);
+  private get store () {
+    const store: Store<StoreRoot> = this.$store
+    return store
   }
 
+  public data () {
+    return {
+      configOpened: !localStorage.getItem('token')
+    }
+  }
+
+  get title () {
+    // @ts-ignore
+    const titleFromRoute: string = this.$route.meta.title
+    return titleFromRoute
+  }
+
+  get paths () {
+    // @ts-ignore
+    const { owner, repo }: { owner: string; repo: string } = this.$route.params
+    if (repo) {
+      return ['Approve', owner, repo]
+    }
+    return []
+  }
+
+  public openURL (url: string) {
+    openURL(url)
+  }
 }
 </script>
 

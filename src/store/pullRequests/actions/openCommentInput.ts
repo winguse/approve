@@ -1,14 +1,14 @@
 
-import { ActionContext } from 'vuex';
-import { StoreRoot } from '../../index.d';
-import { CommentState } from '../enums';
-import { ActiveComment, ChangeSelection, PR } from '../index.d';
+import { ActionContext } from 'vuex'
+import { StoreRoot } from '../../index.d'
+import { CommentState } from '../enums'
+import { ActiveComment, ChangeSelection, PR } from '../index.d'
 
-export default async function openCommentInput(
+export default async function openCommentInput (
   context: ActionContext<PR, StoreRoot>,
-  selection: ChangeSelection,
+  selection: ChangeSelection
 ) {
-  const { state: { selectedFile }, rootState: { info: { login, avatarUrl } } } = context;
+  const { state: { selectedFile }, rootState: { info: { login, avatarUrl } } } = context
   const newComment: ActiveComment = {
     id: 0,
     state: CommentState.Active,
@@ -25,14 +25,14 @@ export default async function openCommentInput(
     detailPos: {
       start: {
         line: selection.startLine,
-        position: selection.startOffset,
+        position: selection.startOffset
       },
       end: {
         line: selection.endLine,
-        position: selection.endOffset,
-      },
-    },
-  };
-  await context.commit('openCommentInput', newComment);
-  await context.dispatch('computeComments');
+        position: selection.endOffset
+      }
+    }
+  }
+  context.commit('openCommentInput', newComment)
+  await context.dispatch('computeComments')
 }

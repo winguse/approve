@@ -1,4 +1,4 @@
 
-export async function empty() {
+export async function empty () {
   // empty
 }

@@ -97,118 +97,119 @@
 </style>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Store } from 'vuex';
-import Decoration from '../../components/Decoration.vue';
-import { StoreRoot } from '../../store/index.d';
-import { ChangeSelection, PR } from '../../store/pullRequests/index.d';
+import { Component, Vue } from 'vue-property-decorator'
+import { Store } from 'vuex'
+import Decoration from '../../components/Decoration.vue'
+import { StoreRoot } from '../../store/index.d'
+import { ChangeSelection, PR } from '../../store/pullRequests/index.d'
 
-function selectedInsideDiffTable(range: Range): boolean {
-  const { commonAncestorContainer } = range;
-  let ancestor: Node | null = commonAncestorContainer;
+function selectedInsideDiffTable (range: Range): boolean {
+  const { commonAncestorContainer } = range
+  let ancestor: Node | null = commonAncestorContainer
   for (let i = 0; i < 5; i++) {
     if (!ancestor) {
-      return false;
+      return false
     }
     // @ts-ignore
     if (ancestor.localName === 'tbody') {
       if ((ancestor as HTMLElement).dataset.diffRoot) {
-        return true;
+        return true
       }
-      return false;
+      return false
     }
-    ancestor = ancestor.parentElement;
+    ancestor = ancestor.parentElement
   }
-  return false;
+  return false
 }
 
-function getPreviousLength(node: Node | null): number {
+function getPreviousLength (node: Node | null): number {
   if (!node) {
-    return 0;
+    return 0
   }
   if (node.nodeType === Node.TEXT_NODE) {
     // @ts-ignore
-    let span: HTMLElement | null = node.parentElement && node.parentElement.previousSibling; // span's older brother
-    let l = 0;
+    let span: HTMLElement | null = node.parentElement && node.parentElement.previousSibling // span's older brother
+    let l = 0
     while (span) {
       // @ts-ignore
-      const length = +(span.dataset.length || 0);
-      l += length;
+      const length = +(span.dataset.length || 0)
+      l += length
       // @ts-ignore
-      span = span.previousSibling;
+      span = span.previousSibling
     }
-    return l;
+    return l
   }
   // for other case, it will be 0
-  return 0;
+  return 0
 }
 
-function getChangeIdx(ele: Node | null): number {
+function getChangeIdx (ele: Node | null): number {
   for (let i = 0; i < 5; i++) {
     if (!ele) {
-      return -1;
+      return -1
     }
     // @ts-ignore
     if (ele.localName === 'tr') {
-      const { idx } = (ele as HTMLElement).dataset;
+      const { idx } = (ele as HTMLElement).dataset
       if (idx) {
-        return +idx;
+        return +idx
       }
-      return -1;
+      return -1
     }
-    ele = ele.parentElement;
+    ele = ele.parentElement
   }
-  return -1;
+  return -1
 }
 
-function calculateSelection(pullRequests: PR): ChangeSelection | undefined {
-  const selection = getSelection();
+function calculateSelection (pullRequests: PR): ChangeSelection | undefined {
+  const selection = getSelection()
+  if (!selection) return
   if (selection.rangeCount === 0) {
     // tslint:disable-next-line:no-console
     // console.log('no: 0');
-    return;
+    return
   }
-  const range = selection.getRangeAt(0);
+  const range = selection.getRangeAt(0)
   if (range.collapsed) {
-    return;
+    return
   }
   if (!selectedInsideDiffTable(range)) {
     // tslint:disable-next-line:no-console
     // console.log('no');
-    return;
+    return
   }
-  const { startContainer, endContainer } = range;
-  let { startOffset, endOffset } = range;
-  startOffset += getPreviousLength(startContainer);
-  endOffset += getPreviousLength(endContainer);
-  const startIdx = getChangeIdx(startContainer);
-  const endIdx = getChangeIdx(endContainer);
+  const { startContainer, endContainer } = range
+  let { startOffset, endOffset } = range
+  startOffset += getPreviousLength(startContainer)
+  endOffset += getPreviousLength(endContainer)
+  const startIdx = getChangeIdx(startContainer)
+  const endIdx = getChangeIdx(endContainer)
   if (startIdx < 0 || endIdx < 0) {
     // unexpected selection
     // tslint:disable-next-line:no-console
     // console.log('unexpected selection');
-    return;
+    return
   }
-  const { activeChanges: changes } = pullRequests;
-  const start = changes[startIdx];
-  const end = changes[endIdx];
-  let added = false;
-  let removed = false;
+  const { activeChanges: changes } = pullRequests
+  const start = changes[startIdx]
+  const end = changes[endIdx]
+  let added = false
+  let removed = false
   for (let i = startIdx; i <= endIdx; i++) {
     if (changes[i].added) {
-      added = true;
+      added = true
     }
     if (changes[i].removed) {
-      removed = true;
+      removed = true
     }
   }
   if (added && removed) {
     // tslint:disable-next-line:no-console
     // console.log('corss add / remove');
-    return;
+    return
   }
-  const { selectedStartCommit, selectedEndCommit } = pullRequests;
-  const sha = removed ? selectedStartCommit : selectedEndCommit;
+  const { selectedStartCommit, selectedEndCommit } = pullRequests
+  const sha = removed ? selectedStartCommit : selectedEndCommit
   const result: ChangeSelection = {
     sha,
     startLine: (removed ? start.leftLineNumber : start.rightLineNumber) || -1,
@@ -216,69 +217,74 @@ function calculateSelection(pullRequests: PR): ChangeSelection | undefined {
     endLine: (removed ? end.leftLineNumber : end.rightLineNumber) || -1,
     endOffset,
     startIdx,
-    endIdx,
-  };
+    endIdx
+  }
   // tslint:disable-next-line:no-console
   // console.log(result);
-  return result;
+  return result
 }
 
 @Component({
-  components: { Decoration },
+  components: { Decoration }
 })
 export default class CommitSelector extends Vue {
-  private get store() {
-    const store: Store<StoreRoot> = this.$store;
-    return store;
+  private get store () {
+    const store: Store<StoreRoot> = this.$store
+    return store
   }
 
   private selection: ChangeSelection | undefined;
 
-  public data() {
+  public data () {
     return {
-      addCommentIdx: -1,
-    };
+      addCommentIdx: -1
+    }
   }
 
-  public beforeCreate() {
+  public beforeCreate () {
     // @ts-ignore
-    const { owner, repo, pullId }: { owner: string, repo: string, pullId: string } = this.$route.params;
+    const { owner, repo, pullId }: { owner: string; repo: string; pullId: string } = this.$route.params
     // @ts-ignore
-    this.$store.dispatch('pullRequests/load', { owner, repo, pullId });
+    this.$store.dispatch('pullRequests/load', { owner, repo, pullId })
   }
 
-  public mounted() {
-    document.addEventListener('selectionchange', this.checkSelection);
+  public mounted () {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    document.addEventListener('selectionchange', this.checkSelection)
   }
 
-  public destroyed() {
-    document.removeEventListener('selectionchange', this.checkSelection);
+  public destroyed () {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    document.removeEventListener('selectionchange', this.checkSelection)
   }
 
-  public openCommentInput() {
-    this.store.dispatch('pullRequests/openCommentInput', this.selection);
-    getSelection().removeAllRanges();
+  public openCommentInput () {
+    this.store.dispatch('pullRequests/openCommentInput', this.selection)
+    const selection = getSelection()
+    if (selection) {
+      selection.removeAllRanges()
+    }
   }
 
-  public checkSelection(event: Event) {
-    const selection = calculateSelection(this.store.state.pullRequests);
+  public checkSelection () {
+    const selection = calculateSelection(this.store.state.pullRequests)
     if (!selection) {
-      this.selection = undefined;
+      this.selection = undefined
       // @ts-ignore
-      this.addCommentIdx = -1;
+      this.addCommentIdx = -1
       // TODO remove if the box is opened
-      return;
+      return
     }
     // @ts-ignore
-    this.addCommentIdx = selection.endIdx;
-    this.selection = selection;
+    this.addCommentIdx = selection.endIdx
+    this.selection = selection
   }
 
-  get changes() {
+  get changes () {
     // tslint:disable-next-line:no-console
     // console.log('get changes');
-    const { activeChanges } = this.store.state.pullRequests;
-    return activeChanges;
+    const { activeChanges } = this.store.state.pullRequests
+    return activeChanges
   }
 }
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <q-layout-drawer side="left" :overlay="false" v-model="showTree" content-class="column">
+  <q-drawer side="left" :overlay="false" v-model="showTree" content-class="column">
     <q-tree
       class="affected-files"
       :nodes="tree"
@@ -11,7 +11,7 @@
     />
 
     <div class="over-all">content</div>
-  </q-layout-drawer>
+  </q-drawer>
 </template>
 
 <style>
@@ -21,55 +21,54 @@
 </style>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Store } from 'vuex';
-import { StoreRoot } from '../../store/index.d';
+import { Component, Vue } from 'vue-property-decorator'
+import { Store } from 'vuex'
+import { StoreRoot } from '../../store/index.d'
 
 @Component
 export default class CommitSelector extends Vue {
-  private get store() {
-    const store: Store<StoreRoot> = this.$store;
-    return store;
+  private get store () {
+    const store: Store<StoreRoot> = this.$store
+    return store
   }
 
-  get selectedFile() {
-    return this.store.state.pullRequests.selectedFile;
+  get selectedFile () {
+    return this.store.state.pullRequests.selectedFile
   }
 
-  set selectedFile(file) {
+  set selectedFile (file) {
     if (!file) {
-      return;
+      return
     }
     if (file.endsWith('/')) {
-      let expanded = [...this.expandedDir];
-      if (expanded.indexOf(file) === -1) {
-        expanded.push(file);
+      let expanded = [...this.expandedDir]
+      if (!expanded.includes(file)) {
+        expanded.push(file)
       } else {
-        expanded = expanded.filter(x => x !== file);
+        expanded = expanded.filter(x => x !== file)
       }
-      this.store.commit('pullRequests/setExpendedDir', expanded);
+      this.store.commit('pullRequests/setExpendedDir', expanded)
     } else {
-      this.store.dispatch('pullRequests/selectFile', file);
+      this.store.dispatch('pullRequests/selectFile', file)
     }
   }
 
-  get expandedDir() {
-    return this.store.state.pullRequests.expendedDir;
+  get expandedDir () {
+    return this.store.state.pullRequests.expendedDir
   }
 
-  set expandedDir(expended) {
-    this.store.commit('pullRequests/setExpendedDir', expended);
+  set expandedDir (expended) {
+    this.store.commit('pullRequests/setExpendedDir', expended)
   }
 
-  get tree() {
-    return this.store.state.pullRequests.tree;
+  get tree () {
+    return this.store.state.pullRequests.tree
   }
 
-  public data() {
+  public data () {
     return {
-      showTree: true,
-    };
+      showTree: true
+    }
   }
 }
 </script>
-

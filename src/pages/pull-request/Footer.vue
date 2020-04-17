@@ -1,7 +1,7 @@
 <template>
-  <q-layout-footer>
+  <q-footer>
     footer
-  </q-layout-footer>
+  </q-footer>
 </template>
 
 <style>
@@ -9,6 +9,6 @@
 
 <script lang="ts">
 export default {
-  name: 'Footer',
-};
+  name: 'Footer'
+}
 </script>

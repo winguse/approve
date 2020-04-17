@@ -1,7 +1,7 @@
-import { Config } from './index.d';
+import { Config } from './index.d'
 
 const state: Config = {
-  token: '',
-};
+  token: ''
+}
 
-export default state;
+export default state
