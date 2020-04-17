@@ -33,7 +33,7 @@ export default class CommitSelector extends Vue {
   }
 
   get selectedFile () {
-    return this.store.state.pullRequests.selectedFile
+    return this.store.state.pullRequest.selectedFile
   }
 
   set selectedFile (file) {
@@ -47,22 +47,22 @@ export default class CommitSelector extends Vue {
       } else {
         expanded = expanded.filter(x => x !== file)
       }
-      this.store.commit('pullRequests/setExpendedDir', expanded)
+      this.store.commit('pullRequest/setExpendedDir', expanded)
     } else {
-      this.store.dispatch('pullRequests/selectFile', file)
+      this.store.dispatch('pullRequest/selectFile', file)
     }
   }
 
   get expandedDir () {
-    return this.store.state.pullRequests.expendedDir
+    return this.store.state.pullRequest.expendedDir
   }
 
   set expandedDir (expended) {
-    this.store.commit('pullRequests/setExpendedDir', expended)
+    this.store.commit('pullRequest/setExpendedDir', expended)
   }
 
   get tree () {
-    return this.store.state.pullRequests.tree
+    return this.store.state.pullRequest.tree
   }
 
   public data () {

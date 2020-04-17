@@ -1,9 +1,9 @@
 import { Config } from './config/index.d'
-import { PR } from './pullRequests/index.d'
+import { PR } from './pullRequest/index.d'
 import { Info } from './info/index.d'
 
 interface StoreRoot {
   config: Config;
-  pullRequests: PR;
+  pullRequest: PR;
   info: Info;
 }

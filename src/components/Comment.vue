@@ -160,8 +160,8 @@
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
 import { Store } from 'vuex'
 import { StoreRoot } from '../store/index.d'
-import { CommentState } from '../store/pullRequests/enums'
-import { ActiveComment, ChangeableCommentFields, ExtendedComment } from '../store/pullRequests/index.d'
+import { CommentState } from '../store/pullRequest/enums'
+import { ActiveComment, ChangeableCommentFields, ExtendedComment } from '../store/pullRequest/index.d'
 import TimeFromNow from './TimeFromNow.vue'
 
 const DEFAULT_TOP = 50
@@ -196,7 +196,7 @@ export default class Comment extends Vue {
   }
 
   get githubUrl () {
-    const { state: { pullRequests: { owner, repo, id } } } = this.store
+    const { state: { pullRequest: { owner, repo, id } } } = this.store
     return `https://github.com/${owner}/${repo}/pull/${id}#discussion_r`
   }
 
@@ -261,11 +261,11 @@ export default class Comment extends Vue {
         state: val
       }
     }
-    this.store.dispatch('pullRequests/updateComment', changes)
+    this.store.dispatch('pullRequest/updateComment', changes)
   }
 
   public cancelNewComment () {
-    this.store.dispatch('pullRequests/cancelNewComment')
+    this.store.dispatch('pullRequest/cancelNewComment')
   }
 
   public deleteComment (e: Event) {
@@ -274,7 +274,7 @@ export default class Comment extends Vue {
     if (!commentId) {
       return
     }
-    this.store.dispatch('pullRequests/deleteComment', commentId)
+    this.store.dispatch('pullRequest/deleteComment', commentId)
   }
 
   public toggleCommentMinimizeStatus () {
@@ -291,13 +291,13 @@ export default class Comment extends Vue {
         minimize
       }
     }
-    this.store.dispatch('pullRequests/updateComment', changes)
+    this.store.dispatch('pullRequest/updateComment', changes)
   }
 
   public submitNewComment () {
     // @ts-ignore
     const { top, right, newCommentMessage }: { top: number; right: number; newCommentMessage: string } = this
-    this.store.dispatch('pullRequests/submitNewComment', { top, right, newCommentMessage })
+    this.store.dispatch('pullRequest/submitNewComment', { top, right, newCommentMessage })
   }
 
   public async replyComment () {
@@ -306,7 +306,7 @@ export default class Comment extends Vue {
     }
     // @ts-ignore
     const { newCommentMessage }: { newCommentMessage: string } = this
-    await this.store.dispatch('pullRequests/replyComment', { replyToId: this.c.id, message: newCommentMessage })
+    await this.store.dispatch('pullRequest/replyComment', { replyToId: this.c.id, message: newCommentMessage })
     this.cancleReply()
   }
 
@@ -378,7 +378,7 @@ export default class Comment extends Vue {
           ...changableFields.fragment,
           boxPos: { right, top }
         }
-        this.store.dispatch('pullRequests/updateComment', {
+        this.store.dispatch('pullRequest/updateComment', {
           ...changableFields,
           fragment
         })

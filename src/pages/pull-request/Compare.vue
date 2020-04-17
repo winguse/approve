@@ -101,7 +101,7 @@ import { Component, Vue } from 'vue-property-decorator'
 import { Store } from 'vuex'
 import Decoration from '../../components/Decoration.vue'
 import { StoreRoot } from '../../store/index.d'
-import { ChangeSelection, PR } from '../../store/pullRequests/index.d'
+import { ChangeSelection, PR } from '../../store/pullRequest/index.d'
 
 function selectedInsideDiffTable (range: Range): boolean {
   const { commonAncestorContainer } = range
@@ -161,7 +161,7 @@ function getChangeIdx (ele: Node | null): number {
   return -1
 }
 
-function calculateSelection (pullRequests: PR): ChangeSelection | undefined {
+function calculateSelection (pullRequest: PR): ChangeSelection | undefined {
   const selection = getSelection()
   if (!selection) return
   if (selection.rangeCount === 0) {
@@ -190,7 +190,7 @@ function calculateSelection (pullRequests: PR): ChangeSelection | undefined {
     // console.log('unexpected selection');
     return
   }
-  const { activeChanges: changes } = pullRequests
+  const { activeChanges: changes } = pullRequest
   const start = changes[startIdx]
   const end = changes[endIdx]
   let added = false
@@ -208,7 +208,7 @@ function calculateSelection (pullRequests: PR): ChangeSelection | undefined {
     // console.log('corss add / remove');
     return
   }
-  const { selectedStartCommit, selectedEndCommit } = pullRequests
+  const { selectedStartCommit, selectedEndCommit } = pullRequest
   const sha = removed ? selectedStartCommit : selectedEndCommit
   const result: ChangeSelection = {
     sha,
@@ -245,7 +245,7 @@ export default class CommitSelector extends Vue {
     // @ts-ignore
     const { owner, repo, pullId }: { owner: string; repo: string; pullId: string } = this.$route.params
     // @ts-ignore
-    this.$store.dispatch('pullRequests/load', { owner, repo, pullId })
+    this.$store.dispatch('pullRequest/load', { owner, repo, pullId })
   }
 
   public mounted () {
@@ -259,7 +259,7 @@ export default class CommitSelector extends Vue {
   }
 
   public openCommentInput () {
-    this.store.dispatch('pullRequests/openCommentInput', this.selection)
+    this.store.dispatch('pullRequest/openCommentInput', this.selection)
     const selection = getSelection()
     if (selection) {
       selection.removeAllRanges()
@@ -267,7 +267,7 @@ export default class CommitSelector extends Vue {
   }
 
   public checkSelection () {
-    const selection = calculateSelection(this.store.state.pullRequests)
+    const selection = calculateSelection(this.store.state.pullRequest)
     if (!selection) {
       this.selection = undefined
       // @ts-ignore
@@ -283,7 +283,7 @@ export default class CommitSelector extends Vue {
   get changes () {
     // tslint:disable-next-line:no-console
     // console.log('get changes');
-    const { activeChanges } = this.store.state.pullRequests
+    const { activeChanges } = this.store.state.pullRequest
     return activeChanges
   }
 }
