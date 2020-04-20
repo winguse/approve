@@ -1,5 +1,5 @@
 <template>
-  <div style="padding: 1em 4em; background: #fff" v-if="maxIndex >= 0">
+  <div class="bg-blue-1 q-px-xl q-py-sm" v-if="maxIndex >= 0">
     <q-range
       v-model.lazy="rangeValues"
       :error="rangeValues.min === rangeValues.max"

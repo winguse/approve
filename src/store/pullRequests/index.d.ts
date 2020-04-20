@@ -5,10 +5,15 @@ export interface PullRequestInfo {
   repoLogin: string;
   number: number;
   title: string;
-  unread: boolean;
   updatedAt: Date;
+  threadId?: number; // only valid if from notification
+  unread?: boolean; // only valid if from notification
+  author?: string;
+  authorAvatar?: string;
+  state?: string;
 }
 
 export interface PullRequests {
-  infos: PullRequestInfo[];
+  notifications: PullRequestInfo[];
+  yourPRs: PullRequestInfo[];
 }

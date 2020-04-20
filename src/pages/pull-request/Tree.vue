@@ -8,9 +8,18 @@
       label-key="name"
       node-key="fullPath"
       default-expand-all
-    />
+    >
+      <template v-slot:default-header="prop">
+        <div class="row items-center">
+          <q-icon :name="prop.node.icon" class="q-mr-sm" color="blue-8" />
+          <span class="text-primary">{{ prop.node.name }}</span>
+          <q-badge v-if="prop.node.commentCount" color="red" class="q-ml-sm">{{ prop.node.commentCount }}</q-badge>
+        </div>
+      </template>
+    </q-tree>
 
-    <div class="over-all">content</div>
+    <!-- <div class="over-all">
+    </div> -->
   </q-drawer>
 </template>
 

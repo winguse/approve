@@ -6,13 +6,22 @@
         :glossy="$q.theme === 'mat'"
         :inverted="$q.theme === 'ios'"
       >
-        <q-breadcrumbs active-color="white" color="light" v-if="paths.length > 0">
+        <q-breadcrumbs active-color="white" color="light">
+          <q-breadcrumbs-el  icon="home" label="Approve" to="/" />
           <q-breadcrumbs-el v-for="path in paths" :label="path" :key="path"/>
         </q-breadcrumbs>
-        <span v-else>
-          {{ title }}
-        </span>
         <q-space />
+
+        <q-btn
+          flat
+          dense
+          round
+          v-if="githubUrl"
+          type="a" :href="githubUrl" target="_blank"
+          aria-label="Open on Github"
+        >
+          <q-icon name="ion-logo-github" />
+        </q-btn>
         <q-btn
           flat
           dense
@@ -55,6 +64,15 @@ export default class CommitSelector extends Vue {
     return store
   }
 
+  get githubUrl () {
+    // @ts-ignore
+    const { owner, repo, pullId }: { owner: string; repo: string; pullId: string } = this.$route.params
+    if (repo) {
+      return `https://github.com/${owner}/${repo}/pull/${pullId}`
+    }
+    return ''
+  }
+
   public data () {
     return {
       configOpened: !localStorage.getItem('token')
@@ -71,7 +89,7 @@ export default class CommitSelector extends Vue {
     // @ts-ignore
     const { owner, repo }: { owner: string; repo: string } = this.$route.params
     if (repo) {
-      return ['Approve', owner, repo]
+      return [owner, repo]
     }
     return []
   }

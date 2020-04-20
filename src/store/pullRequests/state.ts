@@ -1,7 +1,8 @@
 import { PullRequests } from './index.d'
 
 const state: PullRequests = {
-  infos: []
+  notifications: [],
+  yourPRs: []
 }
 
 export default state

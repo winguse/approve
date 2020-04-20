@@ -107,19 +107,23 @@ export function refreshTree (state: PR, files: string[]) {
         // @ts-ignore
         appendContainer = next.children
       } else if (i < paths.length - 1) {
+        const fullPath = paths.slice(0, i + 1).join('/') + '/'
         const dir: TreeDirectory = {
           name: path,
-          fullPath: paths.slice(0, i + 1).join('/') + '/',
+          fullPath,
           icon: 'folder',
-          children: []
+          children: [],
+          commentCount: state.comments.filter(c => c.path.startsWith(fullPath)).length
         }
         appendContainer.push(dir)
         appendContainer = dir.children
       } else {
+        const fullPath = paths.join('/')
         const treeItem: TreeItem = {
           name: path,
-          fullPath: paths.join('/'),
-          icon: 'insert_drive_file'
+          fullPath,
+          icon: 'insert_drive_file',
+          commentCount: state.comments.filter(c => c.path === fullPath).length
         }
         appendContainer.push(treeItem)
       }
