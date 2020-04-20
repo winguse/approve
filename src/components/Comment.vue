@@ -30,6 +30,7 @@
           <q-item-section>
             <q-item-label>
               <span>@{{ c.login }}</span>
+              <span>&nbsp;</span>
               <time-from-now :ts="c.at" />
               <a :href="githubUrl + c.id" target="_blank" class="goto-github" title="goto Github">
                 <q-icon name="fab fa-github"/>
@@ -48,6 +49,7 @@
           <q-item-section>
             <q-item-label>
               <span>@{{ r.login }}</span>
+              <span>&nbsp;</span>
               <time-from-now :ts="r.at" />
               <a :href="githubUrl + r.id" target="_blank" class="goto-github" title="goto Github">
                 <q-icon name="fab fa-github"/>

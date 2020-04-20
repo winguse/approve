@@ -1,7 +1,7 @@
 import { ActionContext } from 'vuex'
 import { StoreRoot } from '../../index.d'
 import { PR } from '../index.d'
-import executeGraphQlQuery from './lib/executeGraphQlQuery'
+import executeGraphQlQuery from '../../../utils/executeGraphQlQuery'
 import { commentFields, convertReviews } from './load'
 
 function refreshCommentsQuery (owner: string, repo: string, pullId: number) {

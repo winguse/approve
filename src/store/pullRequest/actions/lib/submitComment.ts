@@ -1,5 +1,5 @@
 
-import { GITHUB_API_BASE } from './shared'
+import { GITHUB_API_BASE } from '../../../../utils/shared'
 
 export default async function submitComment (
   token: string, owner: string, repo: string, prId: number, sha: string, path: string, position: number, body: string

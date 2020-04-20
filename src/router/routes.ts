@@ -4,13 +4,8 @@ const routes = [
     component: () => import('layouts/DefaultLayout.vue'),
     children: [
       {
-        meta: { title: 'Approve' },
-        path: '',
-        component: () => import('pages/Index.vue')
-      },
-      {
         meta: { title: 'Pull Requests' },
-        path: ':owner/:repo/pulls',
+        path: '',
         component: () => import('pages/PullRequests.vue')
       },
       {
