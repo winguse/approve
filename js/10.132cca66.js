@@ -1,0 +1,1 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([[10],{"23a4":function(e,n,o){"use strict";o.r(n);var t=function(){var e=this,n=e.$createElement,o=e._self._c||n;return o("q-footer")},r=[],a={name:"Footer"},c=a,l=o("2877"),s=o("eebe"),u=o.n(s),f=o("7ff0"),p=Object(l["a"])(c,t,r,!1,null,null,null);n["default"]=p.exports;u()(p,"components",{QFooter:f["a"]})}}]);
