@@ -32,28 +32,28 @@ export default class CommitSelector extends Vue {
   }
 
   get maxIndex () {
-    return this.store.state.pullRequests.commitShaList.length - 1
+    return this.store.state.pullRequest.commitShaList.length - 1
   }
 
   get rangeValues () {
-    const { selectedStartCommit, selectedEndCommit, commitShaList } = this.store.state.pullRequests
+    const { selectedStartCommit, selectedEndCommit, commitShaList } = this.store.state.pullRequest
     const min = commitShaList.indexOf(selectedStartCommit)
     const max = commitShaList.indexOf(selectedEndCommit)
     return { min, max }
   }
 
   set rangeValues ({ min, max }: {min: number; max: number}) {
-    const { commitShaList, mergeTo: { branch } } = this.store.state.pullRequests
+    const { commitShaList, mergeTo: { branch } } = this.store.state.pullRequest
     const selectedStartCommit = min === -1 ? branch : commitShaList[min]
     const selectedEndCommit = commitShaList[max]
-    this.store.dispatch('pullRequests/updateSelectedCommits', {
+    this.store.dispatch('pullRequest/updateSelectedCommits', {
       selectedStartCommit,
       selectedEndCommit
     })
   }
 
   get selectedStartCommit () {
-    const { selectedStartCommit, mergeTo: { branch } } = this.store.state.pullRequests
+    const { selectedStartCommit, mergeTo: { branch } } = this.store.state.pullRequest
     if (selectedStartCommit === branch) {
       return branch
     }
@@ -61,7 +61,7 @@ export default class CommitSelector extends Vue {
   }
 
   get selectedEndCommit () {
-    return this.store.state.pullRequests.selectedEndCommit.slice(0, 6)
+    return this.store.state.pullRequest.selectedEndCommit.slice(0, 6)
   }
 }
 </script>

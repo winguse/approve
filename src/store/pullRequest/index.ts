@@ -1,15 +1,15 @@
 import { Module } from 'vuex'
 
 import { StoreRoot } from '../index.d'
-import { PullRequests } from './index.d'
-import * as actions from './actions'
-import * as mutations from './mutations'
+import actions from './actions'
 import * as getters from './getters'
+import { PR } from './index.d'
+import * as mutations from './mutations'
 import state from './state'
 
 export * from './state'
 
-const pullRequests: Module<PullRequests, StoreRoot> = {
+const pr: Module<PR, StoreRoot> = {
   namespaced: true,
   state,
   getters,
@@ -17,4 +17,4 @@ const pullRequests: Module<PullRequests, StoreRoot> = {
   actions
 }
 
-export default pullRequests
+export default pr

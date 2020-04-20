@@ -1,13 +1,6 @@
 <template>
-  <span class="time-from-now" :title="timeStr">{{ text }}</span>
+  <span :title="timeStr">{{ text }}</span>
 </template>
-
-<style lang="stylus">
-.time-from-now {
-  margin: 0 0.2em;
-  color: #999;
-}
-</style>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
@@ -55,10 +48,18 @@ export default class TimeFromNow extends Vue {
       }
     }
     const days = Math.floor(seconds / 3600 / 24)
+    if (days < 35) {
+      return {
+        timeStr,
+        refresh: 1800,
+        text: `${days}d`
+      }
+    }
+    const months = Math.floor(seconds / 3600 / 24 / 30)
     return {
       timeStr,
       refresh: 1800,
-      text: `${days}d`
+      text: `${months}mo`
     }
   }
 

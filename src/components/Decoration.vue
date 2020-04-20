@@ -44,7 +44,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 import { Store } from 'vuex'
 import { StoreRoot } from '../store/index.d'
-import { ActiveComment, HightLight } from '../store/pullRequests/index.d'
+import { ActiveComment, HightLight } from '../store/pullRequest/index.d'
 import Comment from './Comment.vue'
 
 interface DisplayHighlight {

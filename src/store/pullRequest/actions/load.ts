@@ -7,7 +7,7 @@ import {
   Comment, Commit, CommitFile,
   ExtendedComment, PR, Review, ReviewFile
 } from '../index.d'
-import executeGraphQlQuery from './lib/executeGraphQlQuery'
+import executeGraphQlQuery from '../../../utils/executeGraphQlQuery'
 
 const commentMessageReg = /(.*?)(<!--(.+)-->)?$/
 

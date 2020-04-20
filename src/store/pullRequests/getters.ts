@@ -1,5 +1,5 @@
-import { PR } from './index.d'
+import { PullRequests } from './index.d'
 
-export function getAll (state: PR) {
+export function getAll (state: PullRequests) {
   return state
 }

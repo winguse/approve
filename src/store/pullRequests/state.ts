@@ -1,27 +1,7 @@
-import { Commit, GitObj, PR, Review } from './index.d'
+import { PullRequests } from './index.d'
 
-const emptyGitObj: GitObj = {
-  sha: '',
-  branch: ''
+const state: PullRequests = {
+  infos: []
 }
 
-export const emptyState: PR = {
-  id: 0,
-  selectedFile: '',
-  expendedDir: [],
-  repo: '',
-  owner: '',
-  loading: true,
-  mergeTo: emptyGitObj,
-  mergeFrom: emptyGitObj,
-  tree: [],
-  comments: [],
-  reviews: new Map<string, Review>(),
-  commitShaList: [],
-  commits: new Map<string, Commit>(),
-  activeChanges: [],
-  selectedEndCommit: '',
-  selectedStartCommit: ''
-}
-
-export default Object.assign({}, emptyState)
+export default state
