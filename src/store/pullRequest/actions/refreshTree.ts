@@ -33,7 +33,5 @@ export default function refreshTree (context: ActionContext<PR, StoreRoot>) {
     })
   }
   context.commit('refreshTree', Array.from(files.keys()))
-  if (!selectedFile) {
-    context.dispatch('selectFile', files.keys().next().value)
-  }
+  context.dispatch('selectFile', selectedFile || files.keys().next().value)
 }

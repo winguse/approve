@@ -8,6 +8,7 @@ export interface FileItem {
 
 export interface TreeItem extends FileItem {
   icon: string;
+  commentCount?: number;
 }
 
 export interface TreeDirectory extends TreeItem {
