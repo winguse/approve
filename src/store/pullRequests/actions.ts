@@ -39,7 +39,7 @@ async function listMorePRs (token: string, notifications: PullRequestInfo[]): Pr
   }`)
   queries.push(`
   viewer {
-    pullRequests(first: 20, orderBy: {field: UPDATED_AT, direction: DESC}) {
+    pullRequests(first: 50, orderBy: {field: UPDATED_AT, direction: DESC}) {
       nodes {
         state
         updatedAt
