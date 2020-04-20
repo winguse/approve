@@ -1,6 +1,6 @@
 <template>
   <q-drawer side="right" :overlay="true" v-model="showCommentList">
-    comment list
+    <!-- comment list -->
   </q-drawer>
 </template>
 

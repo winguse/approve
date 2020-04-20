@@ -6,7 +6,8 @@ import { PR } from '../index.d'
 export default function refreshTree (context: ActionContext<PR, StoreRoot>) {
   const {
     selectedStartCommit, selectedEndCommit, commits,
-    mergeTo: { sha: mergeToSha }
+    mergeTo: { sha: mergeToSha },
+    selectedFile
   } = context.state
   const endCommit = commits.get(selectedEndCommit)
   if (!endCommit) {
@@ -32,4 +33,7 @@ export default function refreshTree (context: ActionContext<PR, StoreRoot>) {
     })
   }
   context.commit('refreshTree', Array.from(files.keys()))
+  if (!selectedFile) {
+    context.dispatch('selectFile', files.keys().next().value)
+  }
 }

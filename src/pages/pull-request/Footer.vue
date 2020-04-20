@@ -1,6 +1,6 @@
 <template>
   <q-footer>
-    footer
+    <!-- footer -->
   </q-footer>
 </template>
 
